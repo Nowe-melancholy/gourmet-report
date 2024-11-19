@@ -1,30 +1,34 @@
-import devServer from '@hono/vite-dev-server';
+import {
+  vitePlugin as remix,
+  cloudflareDevProxyVitePlugin as remixCloudflareDevProxy,
+} from '@remix-run/dev';
 import { defineConfig } from 'vite';
-import pages from '@hono/vite-cloudflare-pages';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import adapter from '@hono/vite-dev-server/cloudflare';
+import serverAdapter from 'hono-remix-adapter/vite';
 
-export default defineConfig(({ mode }) => {
-  if (mode === 'client') {
-    return {
-      build: {
-        rollupOptions: {
-          input: './src/frontend/client.tsx',
-          output: {
-            entryFileNames: 'static/frontend/client.js',
-          },
-        },
-      },
-    };
-  } else {
-    return {
-      ssr: {
-        external: ['react', 'react-dom'],
-      },
-      plugins: [
-        pages(),
-        devServer({
-          entry: 'src/index.tsx',
-        }),
-      ],
-    };
+declare module '@remix-run/cloudflare' {
+  interface Future {
+    v3_singleFetch: true;
   }
+}
+
+export default defineConfig({
+  plugins: [
+    remixCloudflareDevProxy(),
+    remix({
+      future: {
+        v3_fetcherPersist: true,
+        v3_relativeSplatPath: true,
+        v3_throwAbortReason: true,
+        v3_singleFetch: true,
+        v3_lazyRouteDiscovery: true,
+      },
+    }),
+    serverAdapter({
+      adapter,
+      entry: './server/index.ts',
+    }),
+    tsconfigPaths(),
+  ],
 });
