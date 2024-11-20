@@ -14,14 +14,15 @@ const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
 // 初回データフェッチ
 export const loader = async () => {
-  try {
-    const res = await client.api.hello.$get();
-    if (!res.ok) throw new Error(res.statusText);
+  return { message: client.api.hello.$url().toJSON() };
+  // try {
+  //   const res = await client.api.hello.$get();
+  //   if (!res.ok) throw new Error(res.statusText);
 
-    return res.json();
-  } catch (error) {
-    return { message: error };
-  }
+  //   return res.json();
+  // } catch (error) {
+  //   return { message: error };
+  // }
 };
 
 export default function Index() {
