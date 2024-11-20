@@ -10,9 +10,9 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-//const client = hc<AppType>(import.meta.env.VITE_API_URL);
-
 export const loader = async () => {
+  const client = hc<AppType>(import.meta.env.VITE_API_URL);
+
   return { message: "Hello, World!" };
   // try {
   //   const res = await client.api.hello.$get();
