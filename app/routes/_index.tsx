@@ -12,17 +12,8 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL);
-  client.api.hello.$url();
-
-  return { message: "Hello, World!" };
-  // try {
-  //   const res = await client.api.hello.$get();
-  //   if (!res.ok) throw new Error(res.statusText);
-
-  //   return res.json();
-  // } catch (error) {
-  //   return { message: error };
-  // }
+  const res = await client.api.hello.$get();
+  return res.json();
 };
 
 export default function Index() {
