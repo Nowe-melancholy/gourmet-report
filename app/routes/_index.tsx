@@ -12,6 +12,7 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL);
+  client.api.hello.$url();
 
   return { message: "Hello, World!" };
   // try {
