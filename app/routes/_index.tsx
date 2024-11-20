@@ -12,9 +12,9 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL);
-  return { message: client.api.hello.$url().toJSON() };
-  // const res = await client.api.hello.$get();
-  // return res.json();
+  // return { message: client.api.hello.$url().toJSON() };
+  const res = await client.api.hello.$get();
+  return res.json();
 };
 
 export default function Index() {
