@@ -45,3 +45,11 @@ npm run deploy
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+
+## Prisma
+
+- bun prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script --output migrations/0001_report.sql
+- npx wrangler d1 migrations apply gourmet-report --local
+- npx wrangler d1 migrations apply gourmet-report --remote
+- npx prisma generate
+- bun wrangler d1 execute gourmet-report --local --file=./prisma/seed/report-test.sql
