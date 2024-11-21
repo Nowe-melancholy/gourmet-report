@@ -2,8 +2,8 @@ import type {
   ActionFunction,
   ActionFunctionArgs,
   LoaderFunction,
-} from '@remix-run/node';
-import { redirect } from '@remix-run/node';
+} from '@remix-run/cloudflare';
+import { redirect } from '@remix-run/cloudflare';
 import { authenticator } from '~/services/auth.server';
 
 export const action: ActionFunction = async ({

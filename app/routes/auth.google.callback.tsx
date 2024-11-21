@@ -1,4 +1,4 @@
-import { LoaderFunction, LoaderFunctionArgs } from '@remix-run/node';
+import { LoaderFunction, LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { authenticator } from '~/services/auth.server';
 
 export const loader: LoaderFunction = async ({
