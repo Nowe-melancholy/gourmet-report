@@ -4,23 +4,13 @@ import type {
   LoaderFunction,
 } from "@remix-run/cloudflare";
 import { redirect } from "@remix-run/cloudflare";
-import { authenticator } from "~/services/auth.server";
+import { getAuthenticator } from "~/services/auth.server";
 
 export const action: ActionFunction = async ({
   request,
-  context: {
-    cloudflare: { env },
-  },
+  context,
 }: ActionFunctionArgs) => {
-  console.log("$$$$$$$$$$$$$$$$$$", env);
-  console.log("&&&&&&&&&&&&", {
-    clientID: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
-    secrets: [process.env.SESSION_SECRET!],
-    secure: process.env.NODE_ENV === "production",
-  });
-  return authenticator.authenticate("google", request);
+  return getAuthenticator(context).authenticate("google", request);
 };
 
 export const loader: LoaderFunction = async () => {

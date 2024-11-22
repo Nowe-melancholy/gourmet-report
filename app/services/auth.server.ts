@@ -1,6 +1,9 @@
 import { Authenticator } from "remix-auth";
 import { GoogleStrategy } from "remix-auth-google";
-import { sessionStorage } from "./session.server";
+import {
+  AppLoadContext,
+  createCookieSessionStorage,
+} from "@remix-run/cloudflare";
 
 export type AuthUserType = {
   id: string;
@@ -8,26 +11,56 @@ export type AuthUserType = {
   email: string;
 };
 
-const authenticator = new Authenticator<AuthUserType>(sessionStorage);
+type Env = {
+  SESSION_SECRET: string;
+  NODE_ENV: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  CLIENT_URL: string;
+  AUTHORIZED_EMAIL: string;
+};
 
-const googleStrategy = new GoogleStrategy<AuthUserType>(
-  {
-    clientID: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
-  },
-  async ({ profile }) => {
-    if (profile.emails![0].value !== process.env.AUTHORIZED_EMAIL)
-      throw new Error("Invalid email address");
+let _authenticator: Authenticator<AuthUserType> | null = null;
 
-    return {
-      id: profile.id,
-      name: profile.displayName,
-      email: profile.emails![0].value,
-    };
-  }
-);
+export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
+  if (_authenticator) return _authenticator;
 
-authenticator.use(googleStrategy);
+  const env: Env = (
+    typeof cloudflare.env === "object" ? cloudflare.env : process.env
+  ) as Env;
 
-export { authenticator };
+  _authenticator = new Authenticator<AuthUserType>(
+    createCookieSessionStorage({
+      cookie: {
+        name: "_session",
+        sameSite: "lax",
+        path: "/",
+        httpOnly: true,
+        secrets: [env.SESSION_SECRET!],
+        secure: env.NODE_ENV === "production",
+      },
+    })
+  );
+
+  _authenticator.use(
+    new GoogleStrategy<AuthUserType>(
+      {
+        clientID: env.GOOGLE_CLIENT_ID!,
+        clientSecret: env.GOOGLE_CLIENT_SECRET!,
+        callbackURL: `${env.CLIENT_URL}/auth/google/callback`,
+      },
+      async ({ profile }) => {
+        if (profile.emails![0].value !== env.AUTHORIZED_EMAIL)
+          throw new Error("Invalid email address");
+
+        return {
+          id: profile.id,
+          name: profile.displayName,
+          email: profile.emails![0].value,
+        };
+      }
+    )
+  );
+
+  return _authenticator;
+};
