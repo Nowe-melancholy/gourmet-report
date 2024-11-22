@@ -29,6 +29,11 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
     typeof cloudflare.env === "object" ? cloudflare.env : process.env
   ) as Env;
 
+  console.log(
+    "#########################",
+    `${env.CLIENT_URL}/auth/google/callback`
+  );
+
   _authenticator = new Authenticator<AuthUserType>(
     createCookieSessionStorage({
       cookie: {
