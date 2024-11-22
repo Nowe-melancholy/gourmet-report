@@ -8,12 +8,6 @@ export type AuthUserType = {
   email: string;
 };
 
-console.log("&&&&&&&&&&&&&&&&&", {
-  clientID: process.env.GOOGLE_CLIENT_ID!,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
-});
-
 const authenticator = new Authenticator<AuthUserType>(sessionStorage);
 
 const googleStrategy = new GoogleStrategy<AuthUserType>(

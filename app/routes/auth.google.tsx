@@ -8,7 +8,11 @@ import { authenticator } from "~/services/auth.server";
 
 export const action: ActionFunction = async ({
   request,
+  context: {
+    cloudflare: { env },
+  },
 }: ActionFunctionArgs) => {
+  console.log("$$$$$$$$$$$$$$$$$$", env);
   console.log("&&&&&&&&&&&&", {
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
