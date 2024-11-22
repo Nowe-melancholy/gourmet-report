@@ -15,6 +15,11 @@ export const loader: LoaderFunction = async ({
   request,
   context,
 }: LoaderFunctionArgs) => {
+  console.log(
+    "#########################",
+    `${(context.cloudflare.env as any).CLIENT_URL}/auth/google/callback`
+  );
+
   const user = await getAuthenticator(context).isAuthenticated(request);
   if (user) {
     // ログイン済みのユーザーはサクセスページにリダイレクト
