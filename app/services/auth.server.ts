@@ -1,12 +1,18 @@
-import { Authenticator } from 'remix-auth';
-import { GoogleStrategy } from 'remix-auth-google';
-import { sessionStorage } from './session.server';
+import { Authenticator } from "remix-auth";
+import { GoogleStrategy } from "remix-auth-google";
+import { sessionStorage } from "./session.server";
 
 export type AuthUserType = {
   id: string;
   name: string;
   email: string;
 };
+
+console.log("&&&&&&&&&&&&&&&&&", {
+  clientID: process.env.GOOGLE_CLIENT_ID!,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  callbackURL: `${process.env.CLIENT_URL}/auth/google/callback`,
+});
 
 const authenticator = new Authenticator<AuthUserType>(sessionStorage);
 
@@ -18,7 +24,7 @@ const googleStrategy = new GoogleStrategy<AuthUserType>(
   },
   async ({ profile }) => {
     if (profile.emails![0].value !== process.env.AUTHORIZED_EMAIL)
-      throw new Error('Invalid email address');
+      throw new Error("Invalid email address");
 
     return {
       id: profile.id,
