@@ -6,4 +6,4 @@ pages_build_output_dir = "./build/client"
 [[d1_databases]]
 binding = "DB"
 database_name = "gourmet-report"
-database_id = "b21b757e-ec73-42c3-a95d-c0a7d9b459c0"
+database_id = "94e8f7da-ec83-4d56-8014-1069bc567280"
