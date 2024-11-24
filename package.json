@@ -12,7 +12,11 @@
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "preview": "bun run build && wrangler pages dev",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "migrate": "prisma migrate diff --from-local-d1 --to-schema-datamodel ./prisma/schema.prisma --script --output",
+    "migrate-local": "wrangler d1 migrations apply gourmet-report --local",
+    "migrate-remote": "wrangler d1 migrations apply gourmet-report --remote",
+    "generate-prisma": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-d1": "^5.22.0",
@@ -54,7 +58,7 @@
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "3.57.1"
+    "wrangler": "^3.90.0"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -49,6 +49,7 @@ npm run deploy
 ## Prisma
 
 - bun prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script --output migrations/0001_report.sql
+- bun prisma migrate diff --from-local-d1 --to-schema-datamodel ./prisma/schema.prisma --script --output migrations/0002_user.sql
 - npx wrangler d1 migrations apply gourmet-report --local
 - npx wrangler d1 migrations apply gourmet-report --remote
 - npx prisma generate

@@ -1,9 +1,9 @@
-import { Authenticator } from "remix-auth";
-import { GoogleStrategy } from "remix-auth-google";
+import { Authenticator } from 'remix-auth';
+import { GoogleStrategy } from 'remix-auth-google';
 import {
   AppLoadContext,
   createCookieSessionStorage,
-} from "@remix-run/cloudflare";
+} from '@remix-run/cloudflare';
 
 export type AuthUserType = {
   id: string;
@@ -26,18 +26,18 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
   if (_authenticator) return _authenticator;
 
   const env: Env = (
-    typeof cloudflare.env === "object" ? cloudflare.env : process.env
+    typeof cloudflare.env === 'object' ? cloudflare.env : process.env
   ) as Env;
 
   _authenticator = new Authenticator<AuthUserType>(
     createCookieSessionStorage({
       cookie: {
-        name: "_session",
-        sameSite: "lax",
-        path: "/",
+        name: '_session',
+        sameSite: 'lax',
+        path: '/',
         httpOnly: true,
         secrets: [env.SESSION_SECRET!],
-        secure: env.NODE_ENV === "production",
+        secure: env.NODE_ENV === 'production',
       },
     })
   );
@@ -51,7 +51,7 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
       },
       async ({ profile }) => {
         if (profile.emails![0].value !== env.AUTHORIZED_EMAIL)
-          throw new Error("Invalid email address");
+          throw new Error('Invalid email address');
 
         return {
           id: profile.id,

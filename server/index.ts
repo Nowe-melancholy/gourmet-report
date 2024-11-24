@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 
 type Bindings = {
   DB: D1Database;
+  'food-picture': R2Bucket;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -21,12 +22,12 @@ app.use(
   })
 );
 
-const route = app.get('/api/hello', async (c) => {
+const route = app.get('/api/getReports', async (c) => {
   const adapter = new PrismaD1(c.env.DB);
   const prisma = new PrismaClient({ adapter });
-  const hoge = await prisma.report.findMany();
+  const reports = await prisma.report.findMany();
 
-  return c.json({ message: hoge[0].name });
+  return c.json({ reports });
 });
 
 export default app;
