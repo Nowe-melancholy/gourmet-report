@@ -25,9 +25,7 @@ let _authenticator: Authenticator<AuthUserType> | null = null;
 export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
   if (_authenticator) return _authenticator;
 
-  const env: Env = (
-    typeof cloudflare.env === 'object' ? cloudflare.env : process.env
-  ) as Env;
+  const env: Env = cloudflare.env as Env;
 
   _authenticator = new Authenticator<AuthUserType>(
     createCookieSessionStorage({

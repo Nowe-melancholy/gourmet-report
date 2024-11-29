@@ -7,3 +7,7 @@ pages_build_output_dir = "./build/client"
 binding = "DB"
 database_name = "gourmet-report"
 database_id = "94e8f7da-ec83-4d56-8014-1069bc567280"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "food-picture"

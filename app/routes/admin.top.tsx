@@ -1,7 +1,14 @@
+import { Link } from '@remix-run/react';
+import { Button } from '~/components/ui/button';
+
 export const loader = async () => {
   return {};
 };
 
 export default function AdminTop() {
-  return <div>管理画面トップ</div>;
+  return (
+    <Link to='/admin/add-report'>
+      <Button>Add</Button>
+    </Link>
+  );
 }

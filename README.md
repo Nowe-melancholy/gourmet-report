@@ -54,3 +54,4 @@ npm run deploy
 - npx wrangler d1 migrations apply gourmet-report --remote
 - npx prisma generate
 - bun wrangler d1 execute gourmet-report --local --file=./prisma/seed/report-test.sql
+- wrangler d1 execute gourmet-report --command='SELECT id FROM report' --local

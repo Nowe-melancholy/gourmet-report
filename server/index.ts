@@ -1,11 +1,14 @@
-import { PrismaD1 } from '@prisma/adapter-d1';
-import { PrismaClient } from '@prisma/client';
+import { ReportRepository } from './repository/report.repository';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { ReportModel } from './domain/report';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
+import { UserRepository } from './repository/user.repository';
 
 type Bindings = {
   DB: D1Database;
-  'food-picture': R2Bucket;
+  R2: R2Bucket;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -22,13 +25,62 @@ app.use(
   })
 );
 
-const route = app.get('/api/getReports', async (c) => {
-  const adapter = new PrismaD1(c.env.DB);
-  const prisma = new PrismaClient({ adapter });
-  const reports = await prisma.report.findMany();
+const route = app
+  .get('/api/getReports', async (c) => {
+    const reportRepo = ReportRepository.create(c.env.DB);
+    const reports = await reportRepo.findAll();
 
-  return c.json({ reports });
-});
+    return c.json({ reports });
+  })
+  .post(
+    '/api/createReport',
+    zValidator(
+      'form',
+      z.object({
+        name: z.string(),
+        rating: z.string(),
+        comment: z.string(),
+        link: z.string(),
+        image: z.instanceof(File),
+        dateYYMMDD: z.string(),
+      })
+    ),
+    async (c) => {
+      const body = await c.req.parseBody<{
+        name: string;
+        rating: string;
+        comment: string;
+        link: string;
+        image: File;
+        dateYYMMDD: string;
+      }>();
+
+      const imgKey = crypto.randomUUID();
+      c.env.R2.put(imgKey, body.image);
+
+      const userRepo = UserRepository.create(c.env.DB);
+      const user = await userRepo.getUserByEmail(process.env.AUTHORIZED_EMAIL!);
+
+      const report = new ReportModel({
+        id: crypto.randomUUID(),
+        name: body.name,
+        rating: parseInt(body.rating, 10),
+        comment: body.comment,
+        link: body.link,
+        imgUrl: `${
+          process.env.NODE_ENV === 'development'
+            ? '/gourmet-report'
+            : 'https://pub-98330438822b465584a1e00385eac515.r2.dev/food-picture'
+        }/${imgKey}`,
+        dateYYYYMMDD: body.dateYYMMDD,
+        userId: user.id,
+      });
+
+      const reportRepo = ReportRepository.create(c.env.DB);
+      await reportRepo.create(report);
+      return c.json(report);
+    }
+  );
 
 export default app;
 // クライアント側で型情報を参照するためexport

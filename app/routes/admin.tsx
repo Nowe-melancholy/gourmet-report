@@ -11,12 +11,14 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
 export default function Admin() {
   return (
-    <>
-      <div>管理画面</div>
-      <Form action='/logout' method='post'>
-        <Button>ログアウト</Button>
-      </Form>
+    <div className='container mx-auto py-8'>
+      <div className='flex justify-between'>
+        <h1 className='text-3xl font-bold mb-8'>管理画面</h1>
+        <Form action='/logout' method='post'>
+          <Button>ログアウト</Button>
+        </Form>
+      </div>
       <Outlet />
-    </>
+    </div>
   );
 }

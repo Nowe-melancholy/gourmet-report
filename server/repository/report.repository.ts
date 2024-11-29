@@ -1,6 +1,6 @@
 import { PrismaD1 } from '@prisma/adapter-d1';
 import { PrismaClient } from '@prisma/client';
-import { Report } from 'server/domain/report';
+import { ReportModel } from 'server/domain/report';
 
 export class ReportRepository {
   private constructor(db: D1Database) {
@@ -14,11 +14,38 @@ export class ReportRepository {
     return new ReportRepository(db);
   }
 
-  async findAll() {
+  findAll = async () => {
     const data = await this.prismaClient.report.findMany();
+
     return data.map(
       (r) =>
-        new Report(r.id, r.name, r.rating, r.link, r.imgUrl, r.dateYYYYMMDD)
+        new ReportModel({
+          id: r.id,
+          name: r.name,
+          rating: r.rating,
+          comment: r.comment,
+          link: r.link,
+          imgUrl: r.imgUrl,
+          dateYYYYMMDD: r.dateYYYYMMDD,
+          userId: r.userId,
+        })
     );
-  }
+  };
+
+  create = async (report: ReportModel) => {
+    await this.prismaClient.report.create({
+      data: {
+        id: report.id,
+        name: report.name,
+        rating: report.rating,
+        comment: report.comment,
+        link: report.link,
+        imgUrl: report.imgUrl,
+        dateYYYYMMDD: report.dateYYYYMMDD,
+        userId: report.userId,
+      },
+    });
+
+    return;
+  };
 }

@@ -1,34 +1,46 @@
-export class Report {
+export class ReportModel {
   constructor(
-    private readonly _id: string,
-    private _name: string,
-    private _rating: number,
-    private _link: string,
-    private _imgUrl: string,
-    private _dateYYMMDD: string
+    private _self: {
+      readonly id: string;
+      name: string;
+      rating: number;
+      comment: string;
+      link: string;
+      imgUrl: string;
+      dateYYYYMMDD: string;
+      userId: string;
+    }
   ) {}
 
   get id(): string {
-    return this._id;
+    return this._self.id;
   }
 
   get name(): string {
-    return this._name;
+    return this._self.name;
   }
 
   get rating(): number {
-    return this._rating;
+    return this._self.rating;
+  }
+
+  get comment(): string {
+    return this._self.comment;
   }
 
   get link(): string {
-    return this._link;
+    return this._self.link;
   }
 
   get imgUrl(): string {
-    return this._imgUrl;
+    return this._self.imgUrl;
   }
 
-  get dateYYMMDD(): string {
-    return this._dateYYMMDD;
+  get dateYYYYMMDD(): string {
+    return this._self.dateYYYYMMDD;
+  }
+
+  get userId(): string {
+    return this._self.userId;
   }
 }

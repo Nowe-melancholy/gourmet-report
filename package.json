@@ -19,8 +19,11 @@
     "generate-prisma": "prisma generate"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.4.1",
+    "@hookform/resolvers": "^3.9.1",
     "@prisma/adapter-d1": "^5.22.0",
     "@prisma/client": "^5.22.0",
+    "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@remix-run/cloudflare": "^2.14.0",
     "@remix-run/cloudflare-pages": "^2.14.0",
@@ -33,10 +36,12 @@
     "lucide-react": "^0.460.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.53.2",
     "remix-auth": "^3.7.0",
     "remix-auth-google": "^2.0.0",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241112.0",
