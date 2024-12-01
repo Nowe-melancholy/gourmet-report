@@ -56,7 +56,7 @@ export default function AddReport() {
       form: {
         name: form.getValues('name'),
         rating: form.getValues('rating').toString(),
-        dateYYMMDD: form.getValues('date'),
+        dateYYMMDD: form.getValues('date').replace(/-/g, ''),
         comment: form.getValues('comment'),
         image: form.getValues('image'),
         link: '',

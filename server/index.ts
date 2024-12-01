@@ -30,7 +30,29 @@ const route = app
     const reportRepo = ReportRepository.create(c.env.DB);
     const reports = await reportRepo.findAll();
 
-    return c.json({ reports });
+    return c.json({
+      reports: reports.map(
+        ({
+          id,
+          name,
+          rating,
+          comment,
+          link,
+          imgUrl,
+          dateYYYYMMDD,
+          userId,
+        }) => ({
+          id,
+          name,
+          rating,
+          comment,
+          link,
+          imgUrl,
+          dateYYYYMMDD,
+          userId,
+        })
+      ),
+    });
   })
   .post(
     '/api/createReport',
@@ -42,7 +64,7 @@ const route = app
         comment: z.string(),
         link: z.string(),
         image: z.instanceof(File),
-        dateYYMMDD: z.string(),
+        dateYYMMDD: z.string().regex(/^\d{8}$/),
       })
     ),
     async (c) => {
@@ -61,16 +83,16 @@ const route = app
       const userRepo = UserRepository.create(c.env.DB);
       const user = await userRepo.getUserByEmail(process.env.AUTHORIZED_EMAIL!);
 
-      const report = new ReportModel({
+      const report = ReportModel.create({
         id: crypto.randomUUID(),
         name: body.name,
         rating: parseInt(body.rating, 10),
         comment: body.comment,
         link: body.link,
         imgUrl: `${
-          process.env.NODE_ENV === 'development'
-            ? '/gourmet-report'
-            : 'https://pub-98330438822b465584a1e00385eac515.r2.dev/food-picture'
+          import.meta.env.NODE_ENV === 'development'
+            ? 'local'
+            : 'https://pub-98330438822b465584a1e00385eac515.r2.dev'
         }/${imgKey}`,
         dateYYYYMMDD: body.dateYYMMDD,
         userId: user.id,

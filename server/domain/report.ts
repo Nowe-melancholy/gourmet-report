@@ -1,46 +1,81 @@
+import { z } from 'zod';
+
 export class ReportModel {
-  constructor(
-    private _self: {
-      readonly id: string;
-      name: string;
-      rating: number;
-      comment: string;
-      link: string;
-      imgUrl: string;
-      dateYYYYMMDD: string;
-      userId: string;
-    }
+  private constructor(
+    private readonly _id: string,
+    private _name: string,
+    private _rating: number,
+    private _comment: string,
+    private _link: string,
+    private _imgUrl: string,
+    private _dateYYYYMMDD: string,
+    private _userId: string
   ) {}
 
+  static create = (input: {
+    id: string;
+    name: string;
+    rating: number;
+    comment: string;
+    link: string;
+    imgUrl: string;
+    dateYYYYMMDD: string;
+    userId: string;
+  }) => {
+    const { id, name, rating, comment, link, imgUrl, dateYYYYMMDD, userId } = z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        rating: z.number(),
+        comment: z.string(),
+        link: z.string(),
+        imgUrl: z.string(),
+        dateYYYYMMDD: z.string().regex(/^\d{8}$/),
+        userId: z.string(),
+      })
+      .parse(input);
+
+    return new ReportModel(
+      id,
+      name,
+      rating,
+      comment,
+      link,
+      imgUrl,
+      dateYYYYMMDD,
+      userId
+    );
+  };
+
   get id(): string {
-    return this._self.id;
+    return this._id;
   }
 
   get name(): string {
-    return this._self.name;
+    return this._name;
   }
 
   get rating(): number {
-    return this._self.rating;
+    return this._rating;
   }
 
   get comment(): string {
-    return this._self.comment;
+    return this._comment;
   }
 
   get link(): string {
-    return this._self.link;
+    return this._link;
   }
 
   get imgUrl(): string {
-    return this._self.imgUrl;
+    return this._imgUrl;
   }
 
   get dateYYYYMMDD(): string {
-    return this._self.dateYYYYMMDD;
+    return this._dateYYYYMMDD;
   }
 
   get userId(): string {
-    return this._self.userId;
+    return this._userId;
   }
 }

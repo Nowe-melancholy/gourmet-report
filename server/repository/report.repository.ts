@@ -17,18 +17,17 @@ export class ReportRepository {
   findAll = async () => {
     const data = await this.prismaClient.report.findMany();
 
-    return data.map(
-      (r) =>
-        new ReportModel({
-          id: r.id,
-          name: r.name,
-          rating: r.rating,
-          comment: r.comment,
-          link: r.link,
-          imgUrl: r.imgUrl,
-          dateYYYYMMDD: r.dateYYYYMMDD,
-          userId: r.userId,
-        })
+    return data.map((r) =>
+      ReportModel.create({
+        id: r.id,
+        name: r.name,
+        rating: r.rating,
+        comment: r.comment,
+        link: r.link,
+        imgUrl: r.imgUrl,
+        dateYYYYMMDD: r.dateYYYYMMDD,
+        userId: r.userId,
+      })
     );
   };
 
