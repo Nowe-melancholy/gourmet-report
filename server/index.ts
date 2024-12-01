@@ -13,6 +13,11 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+const baseImgUrl =
+  process.env.NODE_ENV === 'development'
+    ? 'local'
+    : 'https://pub-98330438822b465584a1e00385eac515.r2.dev';
+
 // すべてのルートにCORS設定を適用
 app.use(
   '*',
@@ -89,11 +94,7 @@ const route = app
         rating: parseInt(body.rating, 10),
         comment: body.comment,
         link: body.link,
-        imgUrl: `${
-          process.env.NODE_ENV === 'development'
-            ? 'local'
-            : 'https://pub-98330438822b465584a1e00385eac515.r2.dev'
-        }/${imgKey}`,
+        imgUrl: `${baseImgUrl}/${imgKey}`,
         dateYYYYMMDD: body.dateYYMMDD,
         userId: user.id,
       });
@@ -101,6 +102,16 @@ const route = app
       const reportRepo = ReportRepository.create(c.env.DB);
       await reportRepo.create(report);
       return c.json(report);
+    }
+  )
+  .delete(
+    '/api/deleteReport',
+    zValidator('query', z.object({ id: z.string() })),
+    async (c) => {
+      const reportRepo = ReportRepository.create(c.env.DB);
+      const { imgUrl } = await reportRepo.delete(c.req.query().id);
+      c.env.R2.delete(imgUrl.replace(`${baseImgUrl}/`, ''));
+      return c.json({ message: 'success' });
     }
   );
 

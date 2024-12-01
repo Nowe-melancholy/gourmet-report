@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useRevalidator } from '@remix-run/react';
 import { hc } from 'hono/client';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { AppType } from 'server';
@@ -11,6 +11,7 @@ import {
   CardContent,
   CardFooter,
 } from '~/components/ui/card';
+import { useToast } from '~/hooks/use-toast';
 
 export const loader = async () => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -20,6 +21,7 @@ export const loader = async () => {
 
 export default function AdminTop() {
   const data = useLoaderData<typeof loader>();
+  const { revalidate } = useRevalidator();
 
   return (
     <>
@@ -40,6 +42,7 @@ export default function AdminTop() {
                 8
               )}`,
             }}
+            revalidate={revalidate}
           />
         ))}
       </div>
@@ -62,16 +65,23 @@ export default function AdminTop() {
 }
 
 const ReportCard = ({
-  report: { name, imgUrl, rating, comment, date },
+  report: { id, name, imgUrl, rating, comment, date },
+  revalidate,
 }: {
   report: {
+    id: string;
     name: string;
     imgUrl: string;
     rating: number;
     comment: string;
     date: string;
   };
+  revalidate: () => void;
 }) => {
+  const client = hc<AppType>(import.meta.env.VITE_API_URL);
+
+  const { toast } = useToast();
+
   return (
     <Card className='w-full'>
       <CardHeader>
@@ -91,6 +101,17 @@ const ReportCard = ({
       </CardContent>
       <CardFooter>
         <p className='text-sm text-muted-foreground'>{date}</p>
+        <Button variant='outline'>編集</Button>
+        <Button
+          variant='outline'
+          onClick={async () => {
+            await client.api.deleteReport.$delete({ query: { id } });
+            toast({ title: 'レポートを削除しました' });
+            revalidate();
+          }}
+        >
+          削除
+        </Button>
       </CardFooter>
     </Card>
   );

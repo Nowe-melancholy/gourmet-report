@@ -17,6 +17,7 @@ import { Button } from '~/components/ui/button';
 import { hc } from 'hono/client';
 import { AppType } from 'server';
 import { useNavigate } from '@remix-run/react';
+import { useToast } from '~/hooks/use-toast';
 
 export const loader = async () => {
   return {};
@@ -52,6 +53,7 @@ export default function AddReport() {
   };
 
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const onSubmit = async () => {
     const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -67,144 +69,148 @@ export default function AddReport() {
       },
     });
 
+    toast({ title: 'レポートを登録しました' });
     navigate('/admin/top');
   };
 
   return (
-    <div className='container mx-auto py-8'>
-      <h1 className='text-3xl font-bold mb-8'>新しい料理レポートを登録</h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-          <FormField
-            control={form.control}
-            name='name'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>料理名</FormLabel>
-                <FormControl>
-                  <Input placeholder='例: 特製ラーメン' {...field} />
-                </FormControl>
-                <FormDescription>
-                  レポートする料理の名前を入力してください。
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='rating'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>評価</FormLabel>
-                <FormControl>
-                  <Input
-                    type='number'
-                    min={1}
-                    max={5}
-                    {...field}
-                    onChange={(e) =>
-                      field.onChange(parseInt(e.target.value, 10))
-                    }
-                  />
-                </FormControl>
-                <FormDescription>
-                  1から5の間で評価してください。
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='date'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>日付</FormLabel>
-                <FormControl>
-                  <Input type='date' {...field} />
-                </FormControl>
-                <FormDescription>
-                  レポートの日付を選択してください。
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='comment'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>コメント</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder='料理の感想を書いてください'
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  最低10文字以上のコメントを入力してください。
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='link'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>リンク</FormLabel>
-                <FormControl>
-                  <Input placeholder='例: https://example.com' {...field} />
-                </FormControl>
-                <FormDescription>
-                  関連するリンクを貼り付けてください
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name='image'
-            render={({ field: { onChange } }) => (
-              <FormItem>
-                <FormLabel>画像</FormLabel>
-                <FormControl>
-                  <Input
-                    type='file'
-                    accept='image/*'
-                    onChange={(e) => {
-                      handleImageChange(e);
-                      onChange(e.target.files?.[0]);
-                    }}
-                    ref={fileInputRef}
-                  />
-                </FormControl>
-                <FormDescription>
-                  料理の画像をアップロードしてください（最大5MB、JPG、PNG形式）
-                </FormDescription>
-                <FormMessage />
-                {previewImage && (
-                  <div className='mt-4'>
-                    <img
-                      src={previewImage}
-                      alt='プレビュー'
-                      width={200}
-                      height={200}
-                      className='object-cover rounded-md'
+    <>
+      <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
+      <div className='container mx-auto py-8'>
+        <h1 className='text-3xl font-bold mb-8'>新しい料理レポートを登録</h1>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+            <FormField
+              control={form.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>料理名</FormLabel>
+                  <FormControl>
+                    <Input placeholder='例: 特製ラーメン' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    レポートする料理の名前を入力してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='rating'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>評価</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={1}
+                      max={5}
+                      {...field}
+                      onChange={(e) =>
+                        field.onChange(parseInt(e.target.value, 10))
+                      }
                     />
-                  </div>
-                )}
-              </FormItem>
-            )}
-          />
-          <Button type='submit'>レポートを登録</Button>
-        </form>
-      </Form>
-    </div>
+                  </FormControl>
+                  <FormDescription>
+                    1から5の間で評価してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='date'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>日付</FormLabel>
+                  <FormControl>
+                    <Input type='date' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    レポートの日付を選択してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='comment'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>コメント</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder='料理の感想を書いてください'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    最低10文字以上のコメントを入力してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='link'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>リンク</FormLabel>
+                  <FormControl>
+                    <Input placeholder='例: https://example.com' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    関連するリンクを貼り付けてください
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='image'
+              render={({ field: { onChange } }) => (
+                <FormItem>
+                  <FormLabel>画像</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      onChange={(e) => {
+                        handleImageChange(e);
+                        onChange(e.target.files?.[0]);
+                      }}
+                      ref={fileInputRef}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    料理の画像をアップロードしてください（最大5MB、JPG、PNG形式）
+                  </FormDescription>
+                  <FormMessage />
+                  {previewImage && (
+                    <div className='mt-4'>
+                      <img
+                        src={previewImage}
+                        alt='プレビュー'
+                        width={200}
+                        height={200}
+                        className='object-cover rounded-md'
+                      />
+                    </div>
+                  )}
+                </FormItem>
+              )}
+            />
+            <Button type='submit'>レポートを登録</Button>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }
 

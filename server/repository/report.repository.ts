@@ -47,4 +47,14 @@ export class ReportRepository {
 
     return;
   };
+
+  delete = async (id: string) => {
+    const deleted = await this.prismaClient.report.delete({
+      where: {
+        id,
+      },
+    });
+
+    return deleted;
+  };
 }
