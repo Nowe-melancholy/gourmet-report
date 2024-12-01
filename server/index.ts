@@ -83,7 +83,7 @@ const route = app
       }>();
 
       const imgKey = crypto.randomUUID();
-      c.env.R2.put(imgKey, body.image);
+      await c.env.R2.put(imgKey, body.image);
 
       const userRepo = UserRepository.create(c.env.DB);
       const user = await userRepo.getUserByEmail(process.env.AUTHORIZED_EMAIL!);
