@@ -110,7 +110,7 @@ const route = app
     async (c) => {
       const reportRepo = ReportRepository.create(c.env.DB);
       const { imgUrl } = await reportRepo.delete(c.req.query().id);
-      c.env.R2.delete(imgUrl.replace(`${baseImgUrl}/`, ''));
+      await c.env.R2.delete(imgUrl.replace(`${baseImgUrl}/`, ''));
       return c.json({ message: 'success' });
     }
   );

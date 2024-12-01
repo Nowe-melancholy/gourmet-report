@@ -100,18 +100,20 @@ const ReportCard = ({
         <p className='text-sm text-muted-foreground'>{comment}</p>
       </CardContent>
       <CardFooter>
-        <p className='text-sm text-muted-foreground'>{date}</p>
-        <Button variant='outline'>編集</Button>
-        <Button
-          variant='outline'
-          onClick={async () => {
-            await client.api.deleteReport.$delete({ query: { id } });
-            toast({ title: 'レポートを削除しました' });
-            revalidate();
-          }}
-        >
-          削除
-        </Button>
+        <div className='flex-col'>
+          <p className='text-sm text-muted-foreground'>{date}</p>
+          <Button variant='outline'>編集</Button>
+          <Button
+            variant='outline'
+            onClick={async () => {
+              await client.api.deleteReport.$delete({ query: { id } });
+              toast({ title: 'レポートを削除しました' });
+              revalidate();
+            }}
+          >
+            削除
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
