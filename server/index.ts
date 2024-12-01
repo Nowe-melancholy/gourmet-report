@@ -90,7 +90,7 @@ const route = app
         comment: body.comment,
         link: body.link,
         imgUrl: `${
-          import.meta.env.NODE_ENV === 'development'
+          process.env.NODE_ENV === 'development'
             ? 'local'
             : 'https://pub-98330438822b465584a1e00385eac515.r2.dev'
         }/${imgKey}`,

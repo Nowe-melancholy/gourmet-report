@@ -16,6 +16,7 @@ import { Textarea } from '~/components/ui/textarea';
 import { Button } from '~/components/ui/button';
 import { hc } from 'hono/client';
 import { AppType } from 'server';
+import { useNavigate } from '@remix-run/react';
 
 export const loader = async () => {
   return {};
@@ -49,10 +50,12 @@ export default function AddReport() {
     }
   };
 
-  const onSubmit = () => {
+  const navigate = useNavigate();
+
+  const onSubmit = async () => {
     const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
-    client.api.createReport.$post({
+    await client.api.createReport.$post({
       form: {
         name: form.getValues('name'),
         rating: form.getValues('rating').toString(),
@@ -62,6 +65,8 @@ export default function AddReport() {
         link: '',
       },
     });
+
+    navigate('/admin/top');
   };
 
   return (
