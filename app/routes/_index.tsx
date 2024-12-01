@@ -43,7 +43,8 @@ export default function Index() {
             report={{
               ...report,
               date: `${report.dateYYYYMMDD.slice(
-                3
+                0,
+                4
               )}-${report.dateYYYYMMDD.slice(4, 6)}-${report.dateYYYYMMDD.slice(
                 6,
                 8

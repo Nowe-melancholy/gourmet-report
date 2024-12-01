@@ -30,6 +30,7 @@ export default function AddReport() {
       rating: 3,
       date: new Date().toISOString().split('T')[0],
       comment: '',
+      link: '',
       image: null,
     },
   });
@@ -62,7 +63,7 @@ export default function AddReport() {
         dateYYMMDD: form.getValues('date').replace(/-/g, ''),
         comment: form.getValues('comment'),
         image: form.getValues('image'),
-        link: '',
+        link: form.getValues('link'),
       },
     });
 
@@ -151,6 +152,22 @@ export default function AddReport() {
           />
           <FormField
             control={form.control}
+            name='link'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>リンク</FormLabel>
+                <FormControl>
+                  <Input placeholder='例: https://example.com' {...field} />
+                </FormControl>
+                <FormDescription>
+                  関連するリンクを貼り付けてください
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name='image'
             render={({ field: { onChange } }) => (
               <FormItem>
@@ -202,6 +219,7 @@ const formSchema = z.object({
   comment: z.string().min(10, {
     message: 'コメントは最低10文字必要です。',
   }),
+  link: z.string().url(),
   image: z
     .any()
     .refine(
