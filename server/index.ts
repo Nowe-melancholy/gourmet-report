@@ -59,6 +59,26 @@ const route = app
       ),
     });
   })
+  .get(
+    '/api/getReportById',
+    zValidator('query', z.object({ id: z.string() })),
+    async (c) => {
+      const reportRepo = ReportRepository.create(c.env.DB);
+      const report = await reportRepo.findById(c.req.query().id);
+      if (!report) throw new Error('Not Found');
+
+      return c.json({
+        id: report.id,
+        name: report.name,
+        rating: report.rating,
+        comment: report.comment,
+        link: report.link,
+        imgUrl: report.imgUrl,
+        dateYYYYMMDD: report.dateYYYYMMDD,
+        userId: report.userId,
+      });
+    }
+  )
   .post(
     '/api/createReport',
     zValidator(
@@ -101,6 +121,67 @@ const route = app
 
       const reportRepo = ReportRepository.create(c.env.DB);
       await reportRepo.create(report);
+      return c.json(report);
+    }
+  )
+  .put(
+    '/api/updateReport',
+    zValidator(
+      'form',
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        rating: z.string(),
+        comment: z.string(),
+        link: z.string(),
+        image: z.union([z.instanceof(File), z.literal('null')]),
+        dateYYMMDD: z.string().regex(/^\d{8}$/),
+      })
+    ),
+    async (c) => {
+      const body = await c.req.parseBody<{
+        id: string;
+        name: string;
+        rating: string;
+        comment: string;
+        link: string;
+        image: File | string;
+        dateYYMMDD: string;
+      }>();
+
+      const userRepo = UserRepository.create(c.env.DB);
+      const user = await userRepo.getUserByEmail(process.env.AUTHORIZED_EMAIL!);
+
+      const reportRepo = ReportRepository.create(c.env.DB);
+      const report = await reportRepo.findById(body.id);
+
+      if (!report) {
+        return c.json({ message: 'not found' }, 404);
+      }
+
+      const imgUrl = await (async () => {
+        if (body.image !== 'null') {
+          const imgKey = crypto.randomUUID();
+          await c.env.R2.put(imgKey, body.image);
+          await c.env.R2.delete(report.imgUrl.replace(`${baseImgUrl}/`, ''));
+
+          return `${baseImgUrl}/${imgKey}`;
+        } else {
+          return report.imgUrl;
+        }
+      })();
+
+      report.update({
+        name: body.name,
+        rating: parseInt(body.rating, 10),
+        comment: body.comment,
+        link: body.link,
+        imgUrl,
+        dateYYYYMMDD: body.dateYYMMDD,
+        userId: user.id,
+      });
+
+      await reportRepo.update(report);
       return c.json(report);
     }
   )

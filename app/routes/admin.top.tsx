@@ -102,7 +102,9 @@ const ReportCard = ({
       <CardFooter>
         <div className='flex-col'>
           <p className='text-sm text-muted-foreground'>{date}</p>
-          <Button variant='outline'>編集</Button>
+          <Link to={`/admin/edit-report/${id}`}>
+            <Button variant='outline'>編集</Button>
+          </Link>
           <Button
             variant='outline'
             onClick={async () => {

@@ -31,10 +31,52 @@ export class ReportRepository {
     );
   };
 
+  findById = async (id: string) => {
+    const data = await this.prismaClient.report.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!data) {
+      return null;
+    }
+
+    return ReportModel.create({
+      id: data.id,
+      name: data.name,
+      rating: data.rating,
+      comment: data.comment,
+      link: data.link,
+      imgUrl: data.imgUrl,
+      dateYYYYMMDD: data.dateYYYYMMDD,
+      userId: data.userId,
+    });
+  };
+
   create = async (report: ReportModel) => {
     await this.prismaClient.report.create({
       data: {
         id: report.id,
+        name: report.name,
+        rating: report.rating,
+        comment: report.comment,
+        link: report.link,
+        imgUrl: report.imgUrl,
+        dateYYYYMMDD: report.dateYYYYMMDD,
+        userId: report.userId,
+      },
+    });
+
+    return;
+  };
+
+  update = async (report: ReportModel) => {
+    await this.prismaClient.report.update({
+      where: {
+        id: report.id,
+      },
+      data: {
         name: report.name,
         rating: report.rating,
         comment: report.comment,

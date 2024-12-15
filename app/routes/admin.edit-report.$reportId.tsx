@@ -1,43 +1,59 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
+import { hc } from 'hono/client';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { AppType } from 'server';
+import { z } from 'zod';
+import { Button } from '~/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
+  FormControl,
+  FormDescription,
   FormMessage,
+  Form,
 } from '~/components/ui/form';
 import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
-import { Button } from '~/components/ui/button';
-import { hc } from 'hono/client';
-import { AppType } from 'server';
-import { useNavigate } from '@remix-run/react';
 import { useToast } from '~/hooks/use-toast';
 
-export const loader = async () => {
-  return {};
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const client = hc<AppType>(import.meta.env.VITE_API_URL);
+  const report = await client.api.getReportById.$get({
+    query: { id: params.reportId ?? '' },
+  });
+
+  return report.json();
 };
 
-export default function AddReport() {
+export default function EditReport() {
+  const data = useLoaderData<typeof loader>();
+  if (!data) throw new Error('No data');
+
+  const params = useParams();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      rating: 3,
-      date: new Date().toISOString().split('T')[0],
-      comment: '',
-      link: '',
+      name: data.name,
+      rating: data.rating,
+      date:
+        data.dateYYYYMMDD.slice(0, 4) +
+        '-' +
+        data.dateYYYYMMDD.slice(4, 6) +
+        '-' +
+        data.dateYYYYMMDD.slice(6, 8),
+      comment: data.comment,
+      link: data.link,
       image: null,
     },
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(data.imgUrl);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -56,20 +72,24 @@ export default function AddReport() {
   const { toast } = useToast();
 
   const onSubmit = async () => {
+    const reportId = params.reportId ?? '';
     const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
-    await client.api.createReport.$post({
+    const hoge = await client.api.updateReport.$put({
       form: {
+        id: reportId,
         name: form.getValues('name'),
         rating: form.getValues('rating').toString(),
         dateYYMMDD: form.getValues('date').replace(/-/g, ''),
         comment: form.getValues('comment'),
-        image: form.getValues('image'),
+        image: form.getValues('image') ?? 'null',
         link: form.getValues('link'),
       },
     });
 
-    toast({ title: 'レポートを登録しました' });
+    console.log('&&&&&&&&&&&&&&&&&&&', await hoge.json());
+
+    toast({ title: 'レポート内容を変更しました' });
     navigate('/admin/top');
   };
 
@@ -77,7 +97,7 @@ export default function AddReport() {
     <>
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
       <div className='container mx-auto py-8'>
-        <h1 className='text-3xl font-bold mb-8'>新しい料理レポートを登録</h1>
+        <h1 className='text-3xl font-bold mb-8'>レポートを編集</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
             <FormField
@@ -227,15 +247,17 @@ const formSchema = z.object({
   }),
   link: z.string().url(),
   image: z
-    .any()
+    .instanceof(File)
     .refine(
-      (file) => file?.size <= MAX_FILE_SIZE,
+      (file) => (file?.size ?? 0) <= MAX_FILE_SIZE,
       `最大ファイルサイズは10MBです。`
     )
     .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+      (file) =>
+        file?.type === undefined || ACCEPTED_IMAGE_TYPES.includes(file?.type),
       'JPG、PNGのみアップロード可能です。'
-    ),
+    )
+    .nullable(),
 });
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5MB

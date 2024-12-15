@@ -78,4 +78,34 @@ export class ReportModel {
   get userId(): string {
     return this._userId;
   }
+
+  update = (input: {
+    name: string;
+    rating: number;
+    comment: string;
+    link: string;
+    imgUrl: string;
+    dateYYYYMMDD: string;
+    userId: string;
+  }) => {
+    const { name, rating, comment, link, imgUrl, dateYYYYMMDD, userId } = z
+      .object({
+        name: z.string(),
+        rating: z.number(),
+        comment: z.string(),
+        link: z.string(),
+        imgUrl: z.string(),
+        dateYYYYMMDD: z.string().regex(/^\d{8}$/),
+        userId: z.string(),
+      })
+      .parse(input);
+
+    this._name = name;
+    this._rating = rating;
+    this._comment = comment;
+    this._link = link;
+    this._imgUrl = imgUrl;
+    this._dateYYYYMMDD = dateYYYYMMDD;
+    this._userId = userId;
+  };
 }
