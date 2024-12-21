@@ -41,6 +41,7 @@ const route = app
           id,
           shopName,
           name,
+          place,
           rating,
           comment,
           link,
@@ -51,6 +52,7 @@ const route = app
           id,
           shopName,
           name,
+          place,
           rating,
           comment,
           link,
@@ -73,6 +75,7 @@ const route = app
         id: report.id,
         shopName: report.shopName,
         name: report.name,
+        place: report.place,
         rating: report.rating,
         comment: report.comment,
         link: report.link,
@@ -89,6 +92,7 @@ const route = app
       z.object({
         shopName: z.string(),
         name: z.string(),
+        place: z.string(),
         rating: z.string(),
         comment: z.string(),
         link: z.string().nullish(),
@@ -100,6 +104,7 @@ const route = app
       const body = await c.req.parseBody<{
         shopName: string;
         name: string;
+        place: string;
         rating: string;
         comment: string;
         link: string;
@@ -117,6 +122,7 @@ const route = app
         id: crypto.randomUUID(),
         shopName: body.shopName,
         name: body.name,
+        place: body.place,
         rating: parseInt(body.rating, 10),
         comment: body.comment,
         link: body.link,
@@ -138,6 +144,7 @@ const route = app
         id: z.string(),
         shopName: z.string(),
         name: z.string(),
+        place: z.string(),
         rating: z.string(),
         comment: z.string(),
         link: z.string().nullish(),
@@ -150,6 +157,7 @@ const route = app
         id: string;
         shopName: string;
         name: string;
+        place: string;
         rating: string;
         comment: string;
         link: string;
@@ -182,6 +190,7 @@ const route = app
       report.update({
         shopName: body.shopName,
         name: body.name,
+        place: body.place,
         rating: parseInt(body.rating, 10),
         comment: body.comment,
         link: body.link,

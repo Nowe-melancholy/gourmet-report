@@ -40,6 +40,7 @@ export default function EditReport() {
     defaultValues: {
       shopName: data.shopName,
       name: data.name,
+      place: data.place,
       rating: data.rating,
       date:
         data.dateYYYYMMDD.slice(0, 4) +
@@ -81,6 +82,7 @@ export default function EditReport() {
         id: reportId,
         shopName: form.getValues('shopName'),
         name: form.getValues('name'),
+        place: form.getValues('place'),
         rating: form.getValues('rating').toString(),
         dateYYMMDD: form.getValues('date').replace(/-/g, ''),
         comment: form.getValues('comment'),
@@ -130,6 +132,20 @@ export default function EditReport() {
                   <FormDescription>
                     料理の名前を入力してください。
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='place'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>場所</FormLabel>
+                  <FormControl>
+                    <Input placeholder='例: 東京' {...field} />
+                  </FormControl>
+                  <FormDescription>場所を入力してください。</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -258,6 +274,9 @@ const formSchema = z.object({
   }),
   name: z.string().min(1, {
     message: '料理名は必須です。',
+  }),
+  place: z.string().min(1, {
+    message: '場所は必須です。',
   }),
   rating: z.number().min(1).max(5),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {

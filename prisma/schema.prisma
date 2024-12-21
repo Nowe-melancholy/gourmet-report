@@ -15,6 +15,7 @@ model Report {
   id String @id
   name String
   shopName String?
+  place String?
   rating Int
   comment String
   link String?

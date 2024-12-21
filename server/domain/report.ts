@@ -5,6 +5,7 @@ export class ReportModel {
     private readonly _id: string,
     private _shopName: string,
     private _name: string,
+    private _place: string,
     private _rating: number,
     private _comment: string,
     private _link: string | null,
@@ -17,6 +18,7 @@ export class ReportModel {
     id: string;
     shopName: string;
     name: string;
+    place: string;
     rating: number;
     comment: string;
     link?: string | null;
@@ -28,6 +30,7 @@ export class ReportModel {
       id,
       shopName,
       name,
+      place,
       rating,
       comment,
       link,
@@ -39,6 +42,7 @@ export class ReportModel {
         id: z.string(),
         shopName: z.string(),
         name: z.string(),
+        place: z.string(),
         rating: z.number(),
         comment: z.string(),
         link: z.string().optional(),
@@ -52,6 +56,7 @@ export class ReportModel {
       id,
       shopName,
       name,
+      place,
       rating,
       comment,
       link ?? null,
@@ -71,6 +76,10 @@ export class ReportModel {
 
   get name(): string {
     return this._name;
+  }
+
+  get place(): string {
+    return this._place;
   }
 
   get rating(): number {
@@ -100,6 +109,7 @@ export class ReportModel {
   update = (input: {
     shopName: string;
     name: string;
+    place: string;
     rating: number;
     comment: string;
     link?: string | null;
@@ -110,6 +120,7 @@ export class ReportModel {
     const {
       shopName,
       name,
+      place,
       rating,
       comment,
       link,
@@ -120,6 +131,7 @@ export class ReportModel {
       .object({
         shopName: z.string(),
         name: z.string(),
+        place: z.string(),
         rating: z.number(),
         comment: z.string(),
         link: z.string().optional(),
@@ -131,6 +143,7 @@ export class ReportModel {
 
     this._shopName = shopName;
     this._name = name;
+    this._place = place;
     this._rating = rating;
     this._comment = comment;
     this._link = link ?? null;

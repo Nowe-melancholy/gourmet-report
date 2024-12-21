@@ -65,11 +65,12 @@ export default function AdminTop() {
 }
 
 const ReportCard = ({
-  report: { id, name, imgUrl, rating, comment, date },
+  report: { id, shopName, name, imgUrl, rating, comment, date },
   revalidate,
 }: {
   report: {
     id: string;
+    shopName: string;
     name: string;
     imgUrl: string;
     rating: number;
@@ -86,7 +87,7 @@ const ReportCard = ({
     <Card className='w-full'>
       <CardHeader>
         <CardTitle className='flex justify-between items-center'>
-          <span>{name}</span>
+          <span>{`${shopName} ${name}`}</span>
           <Badge variant='secondary' className='flex items-center gap-1'>
             <Star className='w-4 h-4 fill-primary' />
             {rating}
