@@ -1,0 +1,1 @@
+insert into user values ("uuid", 'ユーザー名', 'email@test.com')

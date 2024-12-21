@@ -20,6 +20,7 @@ export class ReportRepository {
     return data.map((r) =>
       ReportModel.create({
         id: r.id,
+        shopName: r.shopName ?? '',
         name: r.name,
         rating: r.rating,
         comment: r.comment,
@@ -44,10 +45,11 @@ export class ReportRepository {
 
     return ReportModel.create({
       id: data.id,
+      shopName: data.shopName ?? '',
       name: data.name,
       rating: data.rating,
       comment: data.comment,
-      link: data.link,
+      link: data.link ?? undefined,
       imgUrl: data.imgUrl,
       dateYYYYMMDD: data.dateYYYYMMDD,
       userId: data.userId,
@@ -58,6 +60,7 @@ export class ReportRepository {
     await this.prismaClient.report.create({
       data: {
         id: report.id,
+        shopName: report.shopName,
         name: report.name,
         rating: report.rating,
         comment: report.comment,
@@ -77,6 +80,7 @@ export class ReportRepository {
         id: report.id,
       },
       data: {
+        shopName: report.shopName,
         name: report.name,
         rating: report.rating,
         comment: report.comment,

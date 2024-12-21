@@ -39,6 +39,7 @@ const route = app
       reports: reports.map(
         ({
           id,
+          shopName,
           name,
           rating,
           comment,
@@ -48,6 +49,7 @@ const route = app
           userId,
         }) => ({
           id,
+          shopName,
           name,
           rating,
           comment,
@@ -69,6 +71,7 @@ const route = app
 
       return c.json({
         id: report.id,
+        shopName: report.shopName,
         name: report.name,
         rating: report.rating,
         comment: report.comment,
@@ -84,16 +87,18 @@ const route = app
     zValidator(
       'form',
       z.object({
+        shopName: z.string(),
         name: z.string(),
         rating: z.string(),
         comment: z.string(),
-        link: z.string(),
+        link: z.string().nullish(),
         image: z.instanceof(File),
         dateYYMMDD: z.string().regex(/^\d{8}$/),
       })
     ),
     async (c) => {
       const body = await c.req.parseBody<{
+        shopName: string;
         name: string;
         rating: string;
         comment: string;
@@ -110,6 +115,7 @@ const route = app
 
       const report = ReportModel.create({
         id: crypto.randomUUID(),
+        shopName: body.shopName,
         name: body.name,
         rating: parseInt(body.rating, 10),
         comment: body.comment,
@@ -130,10 +136,11 @@ const route = app
       'form',
       z.object({
         id: z.string(),
+        shopName: z.string(),
         name: z.string(),
         rating: z.string(),
         comment: z.string(),
-        link: z.string(),
+        link: z.string().nullish(),
         image: z.union([z.instanceof(File), z.literal('null')]),
         dateYYMMDD: z.string().regex(/^\d{8}$/),
       })
@@ -141,6 +148,7 @@ const route = app
     async (c) => {
       const body = await c.req.parseBody<{
         id: string;
+        shopName: string;
         name: string;
         rating: string;
         comment: string;
@@ -172,6 +180,7 @@ const route = app
       })();
 
       report.update({
+        shopName: body.shopName,
         name: body.name,
         rating: parseInt(body.rating, 10),
         comment: body.comment,

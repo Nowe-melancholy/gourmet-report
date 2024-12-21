@@ -1,1 +1,0 @@
-insert into report values (1, 'レポート１')

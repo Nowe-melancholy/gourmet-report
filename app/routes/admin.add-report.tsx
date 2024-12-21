@@ -27,6 +27,7 @@ export default function AddReport() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      shopName: '',
       name: '',
       rating: 3,
       date: new Date().toISOString().split('T')[0],
@@ -60,6 +61,7 @@ export default function AddReport() {
 
     await client.api.createReport.$post({
       form: {
+        shopName: form.getValues('shopName'),
         name: form.getValues('name'),
         rating: form.getValues('rating').toString(),
         dateYYMMDD: form.getValues('date').replace(/-/g, ''),
@@ -82,6 +84,22 @@ export default function AddReport() {
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
             <FormField
               control={form.control}
+              name='shopName'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>店名</FormLabel>
+                  <FormControl>
+                    <Input placeholder='例: ほげ食堂' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    店の名前を入力してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name='name'
               render={({ field }) => (
                 <FormItem>
@@ -90,7 +108,7 @@ export default function AddReport() {
                     <Input placeholder='例: 特製ラーメン' {...field} />
                   </FormControl>
                   <FormDescription>
-                    レポートする料理の名前を入力してください。
+                    料理の名前を入力してください。
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -215,6 +233,9 @@ export default function AddReport() {
 }
 
 const formSchema = z.object({
+  shopName: z.string().min(1, {
+    message: '店名は必須です。',
+  }),
   name: z.string().min(1, {
     message: '料理名は必須です。',
   }),
@@ -225,7 +246,7 @@ const formSchema = z.object({
   comment: z.string().min(10, {
     message: 'コメントは最低10文字必要です。',
   }),
-  link: z.string().url(),
+  link: z.string().url().optional(),
   image: z
     .any()
     .refine(

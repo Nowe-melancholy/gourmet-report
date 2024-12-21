@@ -14,9 +14,10 @@ datasource db {
 model Report {
   id String @id
   name String
+  shopName String?
   rating Int
   comment String
-  link String
+  link String?
   dateYYYYMMDD String
   imgUrl String
   user User @relation(fields: [userId], references: [id])

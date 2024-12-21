@@ -38,6 +38,7 @@ export default function EditReport() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      shopName: data.shopName,
       name: data.name,
       rating: data.rating,
       date:
@@ -47,7 +48,7 @@ export default function EditReport() {
         '-' +
         data.dateYYYYMMDD.slice(6, 8),
       comment: data.comment,
-      link: data.link,
+      link: data.link ?? undefined,
       image: null,
     },
   });
@@ -78,6 +79,7 @@ export default function EditReport() {
     const hoge = await client.api.updateReport.$put({
       form: {
         id: reportId,
+        shopName: form.getValues('shopName'),
         name: form.getValues('name'),
         rating: form.getValues('rating').toString(),
         dateYYMMDD: form.getValues('date').replace(/-/g, ''),
@@ -102,6 +104,22 @@ export default function EditReport() {
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
             <FormField
               control={form.control}
+              name='shopName'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>店名</FormLabel>
+                  <FormControl>
+                    <Input placeholder='例: ほげ食堂' {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    店の名前を入力してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name='name'
               render={({ field }) => (
                 <FormItem>
@@ -110,7 +128,7 @@ export default function EditReport() {
                     <Input placeholder='例: 特製ラーメン' {...field} />
                   </FormControl>
                   <FormDescription>
-                    レポートする料理の名前を入力してください。
+                    料理の名前を入力してください。
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -235,6 +253,9 @@ export default function EditReport() {
 }
 
 const formSchema = z.object({
+  shopName: z.string().min(1, {
+    message: '店名は必須です。',
+  }),
   name: z.string().min(1, {
     message: '料理名は必須です。',
   }),
@@ -245,7 +266,7 @@ const formSchema = z.object({
   comment: z.string().min(10, {
     message: 'コメントは最低10文字必要です。',
   }),
-  link: z.string().url(),
+  link: z.string().url().optional(),
   image: z
     .instanceof(File)
     .refine(

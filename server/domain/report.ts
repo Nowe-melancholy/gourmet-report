@@ -3,10 +3,11 @@ import { z } from 'zod';
 export class ReportModel {
   private constructor(
     private readonly _id: string,
+    private _shopName: string,
     private _name: string,
     private _rating: number,
     private _comment: string,
-    private _link: string,
+    private _link: string | null,
     private _imgUrl: string,
     private _dateYYYYMMDD: string,
     private _userId: string
@@ -14,21 +15,33 @@ export class ReportModel {
 
   static create = (input: {
     id: string;
+    shopName: string;
     name: string;
     rating: number;
     comment: string;
-    link: string;
+    link?: string | null;
     imgUrl: string;
     dateYYYYMMDD: string;
     userId: string;
   }) => {
-    const { id, name, rating, comment, link, imgUrl, dateYYYYMMDD, userId } = z
+    const {
+      id,
+      shopName,
+      name,
+      rating,
+      comment,
+      link,
+      imgUrl,
+      dateYYYYMMDD,
+      userId,
+    } = z
       .object({
         id: z.string(),
+        shopName: z.string(),
         name: z.string(),
         rating: z.number(),
         comment: z.string(),
-        link: z.string(),
+        link: z.string().optional(),
         imgUrl: z.string(),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
         userId: z.string(),
@@ -37,10 +50,11 @@ export class ReportModel {
 
     return new ReportModel(
       id,
+      shopName,
       name,
       rating,
       comment,
-      link,
+      link ?? null,
       imgUrl,
       dateYYYYMMDD,
       userId
@@ -49,6 +63,10 @@ export class ReportModel {
 
   get id(): string {
     return this._id;
+  }
+
+  get shopName(): string {
+    return this._shopName;
   }
 
   get name(): string {
@@ -63,7 +81,7 @@ export class ReportModel {
     return this._comment;
   }
 
-  get link(): string {
+  get link(): string | null {
     return this._link;
   }
 
@@ -80,30 +98,42 @@ export class ReportModel {
   }
 
   update = (input: {
+    shopName: string;
     name: string;
     rating: number;
     comment: string;
-    link: string;
+    link?: string | null;
     imgUrl: string;
     dateYYYYMMDD: string;
     userId: string;
   }) => {
-    const { name, rating, comment, link, imgUrl, dateYYYYMMDD, userId } = z
+    const {
+      shopName,
+      name,
+      rating,
+      comment,
+      link,
+      imgUrl,
+      dateYYYYMMDD,
+      userId,
+    } = z
       .object({
+        shopName: z.string(),
         name: z.string(),
         rating: z.number(),
         comment: z.string(),
-        link: z.string(),
+        link: z.string().optional(),
         imgUrl: z.string(),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
         userId: z.string(),
       })
       .parse(input);
 
+    this._shopName = shopName;
     this._name = name;
     this._rating = rating;
     this._comment = comment;
-    this._link = link;
+    this._link = link ?? null;
     this._imgUrl = imgUrl;
     this._dateYYYYMMDD = dateYYYYMMDD;
     this._userId = userId;
