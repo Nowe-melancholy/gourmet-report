@@ -16,11 +16,41 @@ import { Textarea } from '~/components/ui/textarea';
 import { Button } from '~/components/ui/button';
 import { hc } from 'hono/client';
 import { AppType } from 'server';
-import { useNavigate } from '@remix-run/react';
+import { useFetcher, useNavigate, Form as RemixForm } from '@remix-run/react';
 import { useToast } from '~/hooks/use-toast';
+import { ActionFunction, redirect } from '@remix-run/cloudflare';
+import { getAuthenticator } from '~/services/auth.server';
 
 export const loader = async () => {
   return {};
+};
+
+export const action: ActionFunction = async ({ request, context }) => {
+  const formData = await request.formData();
+
+  const auth = await getAuthenticator(context).isAuthenticated(request);
+
+  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+    headers: { Authorization: `Bearer ${auth?.jwt}` },
+  });
+
+  await client.api.auth.createReport.$post({
+    form: {
+      shopName: formData.get('shopName')!.toString(),
+      name: formData.get('name')!.toString(),
+      place: formData.get('place')!.toString(),
+      rating: formData.get('rating')!.toString(),
+      comment: formData.get('comment')!.toString(),
+      link: formData.get('link')!.toString() ?? 'null',
+      image:
+        formData.get('image') instanceof File
+          ? (formData.get('image') as File)
+          : ('null' as const),
+      dateYYYYMMDD: formData.get('dateYYYYMMDD')!.toString().replace(/-/g, ''),
+    },
+  });
+
+  return redirect('/admin/top');
 };
 
 export default function AddReport() {
@@ -56,25 +86,21 @@ export default function AddReport() {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fetcher = useFetcher();
 
-  const onSubmit = async () => {
-    const client = hc<AppType>(import.meta.env.VITE_API_URL);
+  const onSubmit = async (form: z.infer<typeof formSchema>) => {
+    const data = new FormData();
+    data.append('shopName', form.shopName);
+    data.append('name', form.name);
+    data.append('place', form.place);
+    data.append('rating', form.rating.toString());
+    data.append('dateYYYYMMDD', form.date.replace(/-/g, ''));
+    data.append('comment', form.comment);
+    data.append('image', form.image ?? '');
+    data.append('link', form.link);
 
-    await client.api.auth.createReport.$post({
-      form: {
-        shopName: form.getValues('shopName'),
-        name: form.getValues('name'),
-        place: form.getValues('place'),
-        rating: form.getValues('rating').toString(),
-        dateYYMMDD: form.getValues('date').replace(/-/g, ''),
-        comment: form.getValues('comment'),
-        image: form.getValues('image'),
-        link: form.getValues('link'),
-      },
-    });
-
-    toast({ title: 'レポートを登録しました' });
-    navigate('/admin/top');
+    fetcher.submit(data, { method: 'post', encType: 'multipart/form-data' });
+    toast({ title: 'レポート内容を変更しました' });
   };
 
   return (
@@ -83,7 +109,11 @@ export default function AddReport() {
       <div className='container mx-auto py-8'>
         <h1 className='text-3xl font-bold mb-8'>新しい料理レポートを登録</h1>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+          <RemixForm
+            method='post'
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='space-y-8'
+          >
             <FormField
               control={form.control}
               name='shopName'
@@ -241,7 +271,7 @@ export default function AddReport() {
               )}
             />
             <Button type='submit'>レポートを登録</Button>
-          </form>
+          </RemixForm>
         </Form>
       </div>
     </>

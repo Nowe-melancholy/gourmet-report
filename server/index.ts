@@ -113,10 +113,14 @@ const route = app
         comment: z.string(),
         link: z.string().nullish(),
         image: z.instanceof(File),
-        dateYYMMDD: z.string().regex(/^\d{8}$/),
+        dateYYYYMMDD: z.string().regex(/^\d{8}$/),
       })
     ),
     async (c) => {
+      const payload = c.get('jwtPayload');
+      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+        throw new Error('Unauthorized Email');
+
       const body = await c.req.parseBody<{
         shopName: string;
         name: string;
@@ -125,7 +129,7 @@ const route = app
         comment: string;
         link: string;
         image: File;
-        dateYYMMDD: string;
+        dateYYYYMMDD: string;
       }>();
 
       const imgKey = crypto.randomUUID();
@@ -143,7 +147,7 @@ const route = app
         comment: body.comment,
         link: body.link,
         imgUrl: `${baseImgUrl}/${imgKey}`,
-        dateYYYYMMDD: body.dateYYMMDD,
+        dateYYYYMMDD: body.dateYYYYMMDD,
         userId: user.id,
       });
 
