@@ -1,6 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { LoaderFunctionArgs } from '@remix-run/cloudflare';
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
+import {
+  ActionFunction,
+  LoaderFunctionArgs,
+  redirect,
+} from '@remix-run/cloudflare';
+import {
+  useLoaderData,
+  useNavigate,
+  Form as RemixForm,
+  useFetcher,
+} from '@remix-run/react';
 import { hc } from 'hono/client';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -19,6 +28,7 @@ import {
 import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
 import { useToast } from '~/hooks/use-toast';
+import { getAuthenticator } from '~/services/auth.server';
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL);
@@ -29,11 +39,40 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return report.json();
 };
 
+export const action: ActionFunction = async ({ request, context, params }) => {
+  const formData = await request.formData();
+
+  const auth = await getAuthenticator(context).isAuthenticated(request);
+
+  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+    headers: { Authorization: `Bearer ${auth?.jwt}` },
+  });
+
+  const reportId = params.reportId ?? '';
+
+  await client.api.auth.updateReport.$put({
+    form: {
+      id: reportId,
+      shopName: formData.get('shopName')!.toString(),
+      name: formData.get('name')!.toString(),
+      place: formData.get('place')!.toString(),
+      rating: formData.get('rating')!.toString(),
+      comment: formData.get('comment')!.toString(),
+      link: formData.get('link')!.toString() ?? 'null',
+      image:
+        formData.get('image') instanceof File
+          ? (formData.get('image') as File)
+          : ('null' as const),
+      dateYYYYMMDD: formData.get('dateYYYYMMDD')!.toString().replace(/-/g, ''),
+    },
+  });
+
+  return redirect('/admin/top');
+};
+
 export default function EditReport() {
   const data = useLoaderData<typeof loader>();
   if (!data) throw new Error('No data');
-
-  const params = useParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,7 +88,7 @@ export default function EditReport() {
         '-' +
         data.dateYYYYMMDD.slice(6, 8),
       comment: data.comment,
-      link: data.link ?? undefined,
+      link: data.link ?? '',
       image: null,
     },
   });
@@ -70,31 +109,23 @@ export default function EditReport() {
     }
   };
 
+  const fetcher = useFetcher();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const onSubmit = async () => {
-    const reportId = params.reportId ?? '';
-    const client = hc<AppType>(import.meta.env.VITE_API_URL);
+  const onSubmit = async (form: z.infer<typeof formSchema>) => {
+    const data = new FormData();
+    data.append('shopName', form.shopName);
+    data.append('name', form.name);
+    data.append('place', form.place);
+    data.append('rating', form.rating.toString());
+    data.append('dateYYYYMMDD', form.date.replace(/-/g, ''));
+    data.append('comment', form.comment);
+    data.append('image', form.image ?? '');
+    data.append('link', form.link);
 
-    const hoge = await client.api.updateReport.$put({
-      form: {
-        id: reportId,
-        shopName: form.getValues('shopName'),
-        name: form.getValues('name'),
-        place: form.getValues('place'),
-        rating: form.getValues('rating').toString(),
-        dateYYMMDD: form.getValues('date').replace(/-/g, ''),
-        comment: form.getValues('comment'),
-        image: form.getValues('image') ?? 'null',
-        link: form.getValues('link'),
-      },
-    });
-
-    console.log('&&&&&&&&&&&&&&&&&&&', await hoge.json());
-
+    fetcher.submit(data, { method: 'post', encType: 'multipart/form-data' });
     toast({ title: 'レポート内容を変更しました' });
-    navigate('/admin/top');
   };
 
   return (
@@ -102,8 +133,13 @@ export default function EditReport() {
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
       <div className='container mx-auto py-8'>
         <h1 className='text-3xl font-bold mb-8'>レポートを編集</h1>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+          <RemixForm
+            method='post'
+            onSubmit={form.handleSubmit(onSubmit)}
+            className='space-y-8'
+          >
             <FormField
               control={form.control}
               name='shopName'
@@ -261,7 +297,7 @@ export default function EditReport() {
               )}
             />
             <Button type='submit'>レポートを登録</Button>
-          </form>
+          </RemixForm>
         </Form>
       </div>
     </>
@@ -285,7 +321,7 @@ const formSchema = z.object({
   comment: z.string().min(10, {
     message: 'コメントは最低10文字必要です。',
   }),
-  link: z.string().url().optional(),
+  link: z.string().url().or(z.string().length(0)),
   image: z
     .instanceof(File)
     .refine(

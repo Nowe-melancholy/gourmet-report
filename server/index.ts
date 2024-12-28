@@ -5,6 +5,7 @@ import { ReportModel } from './domain/report';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { UserRepository } from './repository/user.repository';
+import { jwt, sign } from 'hono/jwt';
 
 type Bindings = {
   DB: D1Database;
@@ -19,18 +20,33 @@ const baseImgUrl =
     : 'https://pub-98330438822b465584a1e00385eac515.r2.dev';
 
 // すべてのルートにCORS設定を適用
-app.use(
-  '*',
-  cors({
-    origin: '*',
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
-    exposeHeaders: ['Content-Length'],
-    maxAge: 600,
-  })
-);
+app
+  .use(
+    '*',
+    cors({
+      origin: '*',
+      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization'],
+      exposeHeaders: ['Content-Length'],
+      maxAge: 600,
+    })
+  )
+  .use('/api/auth/*', jwt({ secret: process.env.JWT_SECRET! }));
 
 const route = app
+  .get(
+    '/api/login',
+    zValidator('query', z.object({ email: z.string().email() })),
+    async (c) => {
+      const email = c.req.query().email;
+      if (email !== process.env.AUTHORIZED_EMAIL)
+        throw new Error('Unauthorized');
+
+      const jwt = await sign({ email }, process.env.JWT_SECRET!);
+
+      return c.json({ jwt });
+    }
+  )
   .get('/api/getReports', async (c) => {
     const reportRepo = ReportRepository.create(c.env.DB);
     const reports = await reportRepo.findAll();
@@ -86,7 +102,7 @@ const route = app
     }
   )
   .post(
-    '/api/createReport',
+    '/api/auth/createReport',
     zValidator(
       'form',
       z.object({
@@ -137,7 +153,7 @@ const route = app
     }
   )
   .put(
-    '/api/updateReport',
+    '/api/auth/updateReport',
     zValidator(
       'form',
       z.object({
@@ -147,12 +163,16 @@ const route = app
         place: z.string(),
         rating: z.string(),
         comment: z.string(),
-        link: z.string().nullish(),
+        link: z.union([z.string().url(), z.literal('null')]),
         image: z.union([z.instanceof(File), z.literal('null')]),
-        dateYYMMDD: z.string().regex(/^\d{8}$/),
+        dateYYYYMMDD: z.string().regex(/^\d{8}$/),
       })
     ),
     async (c) => {
+      const payload = c.get('jwtPayload');
+      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+        throw new Error('Unauthorized Email');
+
       const body = await c.req.parseBody<{
         id: string;
         shopName: string;
@@ -162,7 +182,7 @@ const route = app
         comment: string;
         link: string;
         image: File | string;
-        dateYYMMDD: string;
+        dateYYYYMMDD: string;
       }>();
 
       const userRepo = UserRepository.create(c.env.DB);
@@ -195,7 +215,7 @@ const route = app
         comment: body.comment,
         link: body.link,
         imgUrl,
-        dateYYYYMMDD: body.dateYYMMDD,
+        dateYYYYMMDD: body.dateYYYYMMDD,
         userId: user.id,
       });
 
@@ -204,7 +224,7 @@ const route = app
     }
   )
   .delete(
-    '/api/deleteReport',
+    '/api/auth/deleteReport',
     zValidator('query', z.object({ id: z.string() })),
     async (c) => {
       const reportRepo = ReportRepository.create(c.env.DB);

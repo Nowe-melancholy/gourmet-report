@@ -60,7 +60,7 @@ export default function AddReport() {
   const onSubmit = async () => {
     const client = hc<AppType>(import.meta.env.VITE_API_URL);
 
-    await client.api.createReport.$post({
+    await client.api.auth.createReport.$post({
       form: {
         shopName: form.getValues('shopName'),
         name: form.getValues('name'),
@@ -265,7 +265,7 @@ const formSchema = z.object({
   comment: z.string().min(10, {
     message: 'コメントは最低10文字必要です。',
   }),
-  link: z.string().url().optional(),
+  link: z.string().url().or(z.string().length(0)),
   image: z
     .any()
     .refine(

@@ -109,7 +109,7 @@ const ReportCard = ({
           <Button
             variant='outline'
             onClick={async () => {
-              await client.api.deleteReport.$delete({ query: { id } });
+              await client.api.auth.deleteReport.$delete({ query: { id } });
               toast({ title: 'レポートを削除しました' });
               revalidate();
             }}

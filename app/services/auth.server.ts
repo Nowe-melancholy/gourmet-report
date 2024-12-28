@@ -4,11 +4,11 @@ import {
   AppLoadContext,
   createCookieSessionStorage,
 } from '@remix-run/cloudflare';
+import { hc } from 'hono/client';
+import { AppType } from 'server';
 
 export type AuthUserType = {
-  id: string;
-  name: string;
-  email: string;
+  jwt: string;
 };
 
 type Env = {
@@ -18,6 +18,7 @@ type Env = {
   GOOGLE_CLIENT_SECRET: string;
   CLIENT_URL: string;
   AUTHORIZED_EMAIL: string;
+  VITE_API_URL: string;
 };
 
 let _authenticator: Authenticator<AuthUserType> | null = null;
@@ -48,14 +49,12 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
         callbackURL: `${env.CLIENT_URL}/auth/google/callback`,
       },
       async ({ profile }) => {
-        if (profile.emails![0].value !== env.AUTHORIZED_EMAIL)
-          throw new Error('Invalid email address');
+        const client = hc<AppType>(env.VITE_API_URL);
+        const res = await client.api.login.$get({
+          query: { email: profile.emails[0].value },
+        });
 
-        return {
-          id: profile.id,
-          name: profile.displayName,
-          email: profile.emails![0].value,
-        };
+        return res.json();
       }
     )
   );

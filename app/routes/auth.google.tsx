@@ -11,6 +11,7 @@ export const action: ActionFunction = async ({
   context,
 }: ActionFunctionArgs) => {
   const authenticator = getAuthenticator(context);
+
   if (await authenticator.isAuthenticated(request))
     return redirect('/admin/top');
 
