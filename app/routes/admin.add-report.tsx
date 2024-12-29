@@ -1,6 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { type ActionFunction, redirect } from '@remix-run/cloudflare'
-import { Form as RemixForm, useFetcher, useNavigate } from '@remix-run/react'
+import {
+  Form as RemixForm,
+  useFetcher,
+  useNavigate,
+  useNavigation,
+} from '@remix-run/react'
 import { hc } from 'hono/client'
 import { Loader } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -105,7 +110,8 @@ export default function AddReport() {
     toast({ title: 'レポート内容を変更しました' })
   }
 
-  console.log('aaaaaaaaaaaaaaaaaaa', form.formState.isSubmitting)
+  const isSubmitting =
+    fetcher.state === 'submitting' || form.formState.isSubmitting
 
   return (
     <>
@@ -274,8 +280,8 @@ export default function AddReport() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <Loader className="animate-spin" />
               ) : (
                 'レポートを登録'

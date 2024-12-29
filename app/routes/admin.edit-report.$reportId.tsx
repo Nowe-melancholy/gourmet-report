@@ -125,6 +125,9 @@ export default function EditReport() {
     toast({ title: 'レポート内容を変更しました' })
   }
 
+  const isSubmitting =
+    fetcher.state === 'submitting' || form.formState.isSubmitting
+
   return (
     <>
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
@@ -293,8 +296,8 @@ export default function EditReport() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <Loader className="animate-spin" />
               ) : (
                 'レポートを登録'
