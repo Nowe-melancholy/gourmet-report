@@ -45,8 +45,8 @@ export class ReportModel {
         place: z.string(),
         rating: z.number(),
         comment: z.string(),
-        link: z.string().url().optional(),
-        imgUrl: z.string().url(),
+        link: z.string().optional(),
+        imgUrl: z.string(),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
         userId: z.string().uuid(),
       })

@@ -11,6 +11,7 @@ import {
   useNavigate,
 } from '@remix-run/react'
 import { hc } from 'hono/client'
+import { Loader } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { AppType } from 'server'
@@ -292,7 +293,13 @@ export default function EditReport() {
                 </FormItem>
               )}
             />
-            <Button type="submit">レポートを登録</Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? (
+                <Loader className="animate-spin" />
+              ) : (
+                'レポートを登録'
+              )}
+            </Button>
           </RemixForm>
         </Form>
       </div>
