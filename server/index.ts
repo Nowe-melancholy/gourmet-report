@@ -10,6 +10,7 @@ import { UserRepository } from './repository/user.repository'
 type Bindings = {
   DB: D1Database
   R2: R2Bucket
+  JWT_SECRET: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -31,7 +32,12 @@ app
       maxAge: 600,
     }),
   )
-  .use('/api/auth/*', jwt({ secret: process.env.JWT_SECRET ?? '' }))
+  .use('/api/auth/*', (c, next) => {
+    const jwtMiddleware = jwt({
+      secret: c.env.JWT_SECRET,
+    })
+    return jwtMiddleware(c, next)
+  })
 
 const route = app
   .get(
