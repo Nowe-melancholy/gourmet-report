@@ -39,16 +39,16 @@ export class ReportModel {
       userId,
     } = z
       .object({
-        id: z.string(),
-        shopName: z.string(),
-        name: z.string(),
+        id: z.string().uuid(),
+        shopName: z.string().min(1),
+        name: z.string().min(1),
         place: z.string(),
         rating: z.number(),
         comment: z.string(),
-        link: z.string().optional(),
-        imgUrl: z.string(),
+        link: z.string().url().optional(),
+        imgUrl: z.string().url(),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
-        userId: z.string(),
+        userId: z.string().uuid(),
       })
       .parse(input)
 
@@ -129,15 +129,15 @@ export class ReportModel {
       userId,
     } = z
       .object({
-        shopName: z.string(),
-        name: z.string(),
+        shopName: z.string().min(1),
+        name: z.string().min(1),
         place: z.string(),
         rating: z.number(),
         comment: z.string(),
-        link: z.string().optional(),
-        imgUrl: z.string(),
+        link: z.string().url().optional(),
+        imgUrl: z.string().url(),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
-        userId: z.string(),
+        userId: z.string().uuid(),
       })
       .parse(input)
 

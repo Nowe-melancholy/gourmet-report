@@ -54,7 +54,7 @@ export default function Index() {
         ))}
       </div>
       <div className="flex justify-center mt-8 gap-2">
-        <Link to={`/reports?page=1`}>
+        <Link to={'/reports?page=1'}>
           <Button variant="outline">
             <ChevronLeft className="h-4 w-4 mr-2" />
             前へ

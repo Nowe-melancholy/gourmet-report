@@ -33,6 +33,7 @@ export default async function handleRequest(
           // Log streaming rendering errors from inside the shell
           console.error(error)
         }
+        // biome-ignore lint:
         responseStatusCode = 500
       },
     },

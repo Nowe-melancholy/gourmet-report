@@ -35,7 +35,7 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
         sameSite: 'lax',
         path: '/',
         httpOnly: true,
-        secrets: [env.SESSION_SECRET!],
+        secrets: [env.SESSION_SECRET ?? ''],
         secure: env.NODE_ENV === 'production',
       },
     }),
@@ -44,8 +44,8 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
   _authenticator.use(
     new GoogleStrategy<AuthUserType>(
       {
-        clientID: env.GOOGLE_CLIENT_ID!,
-        clientSecret: env.GOOGLE_CLIENT_SECRET!,
+        clientID: env.GOOGLE_CLIENT_ID ?? '',
+        clientSecret: env.GOOGLE_CLIENT_SECRET ?? '',
         callbackURL: `${env.CLIENT_URL}/auth/google/callback`,
       },
       async ({ profile }) => {

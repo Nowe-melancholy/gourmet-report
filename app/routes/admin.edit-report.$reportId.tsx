@@ -53,17 +53,18 @@ export const action: ActionFunction = async ({ request, context, params }) => {
   await client.api.auth.updateReport.$put({
     form: {
       id: reportId,
-      shopName: formData.get('shopName')!.toString(),
-      name: formData.get('name')!.toString(),
-      place: formData.get('place')!.toString(),
-      rating: formData.get('rating')!.toString(),
-      comment: formData.get('comment')!.toString(),
-      link: formData.get('link')!.toString() ?? 'null',
+      shopName: formData.get('shopName')?.toString() ?? '',
+      name: formData.get('name')?.toString() ?? '',
+      place: formData.get('place')?.toString() ?? '',
+      rating: formData.get('rating')?.toString() ?? '',
+      comment: formData.get('comment')?.toString() ?? '',
+      link: formData.get('link')?.toString() ?? 'null',
       image:
         formData.get('image') instanceof File
           ? (formData.get('image') as File)
           : ('null' as const),
-      dateYYYYMMDD: formData.get('dateYYYYMMDD')!.toString().replace(/-/g, ''),
+      dateYYYYMMDD:
+        formData.get('dateYYYYMMDD')?.toString().replace(/-/g, '') ?? '',
     },
   })
 
@@ -321,7 +322,7 @@ const formSchema = z.object({
     .instanceof(File)
     .refine(
       file => (file?.size ?? 0) <= MAX_FILE_SIZE,
-      `最大ファイルサイズは10MBです。`,
+      '最大ファイルサイズは10MBです。',
     )
     .refine(
       file =>
