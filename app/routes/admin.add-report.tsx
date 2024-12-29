@@ -105,6 +105,8 @@ export default function AddReport() {
     toast({ title: 'レポート内容を変更しました' })
   }
 
+  console.log('aaaaaaaaaaaaaaaaaaa', form.formState.isSubmitting)
+
   return (
     <>
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>

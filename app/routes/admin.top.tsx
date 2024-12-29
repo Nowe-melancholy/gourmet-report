@@ -1,4 +1,5 @@
-import { Link, useLoaderData, useRevalidator } from '@remix-run/react'
+import type { ActionFunction } from '@remix-run/cloudflare'
+import { Form, Link, useLoaderData, useRevalidator } from '@remix-run/react'
 import { hc } from 'hono/client'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import type { AppType } from 'server'
@@ -12,11 +13,28 @@ import {
   CardTitle,
 } from '~/components/ui/card'
 import { useToast } from '~/hooks/use-toast'
+import { getAuthenticator } from '~/services/auth.server'
 
 export const loader = async () => {
   const client = hc<AppType>(import.meta.env.VITE_API_URL)
   const res = await client.api.getReports.$get()
   return res.json()
+}
+
+export const action: ActionFunction = async ({ request, context }) => {
+  const formData = await request.formData()
+
+  const auth = await getAuthenticator(context).isAuthenticated(request)
+
+  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+    headers: { Authorization: `Bearer ${auth?.jwt}` },
+  })
+
+  await client.api.auth.deleteReport.$delete({
+    query: { id: formData.get('reportId')?.toString() ?? '' },
+  })
+
+  return null
 }
 
 export default function AdminTop() {
@@ -103,19 +121,24 @@ const ReportCard = ({
       <CardFooter>
         <div className="flex-col">
           <p className="text-sm text-muted-foreground">{date}</p>
-          <Link to={`/admin/edit-report/${id}`}>
-            <Button variant="outline">編集</Button>
-          </Link>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              await client.api.auth.deleteReport.$delete({ query: { id } })
-              toast({ title: 'レポートを削除しました' })
-              revalidate()
-            }}
-          >
-            削除
-          </Button>
+          <div className="flex gap-1">
+            <Link to={`/admin/edit-report/${id}`}>
+              <Button variant="outline">編集</Button>
+            </Link>
+            <Form method="post">
+              <input type="hidden" name="reportId" value={id} />
+              <Button
+                variant="outline"
+                type="submit"
+                onClick={() => {
+                  revalidate()
+                  toast({ title: 'レポートを削除しました' })
+                }}
+              >
+                削除
+              </Button>
+            </Form>
+          </div>
         </div>
       </CardFooter>
     </Card>
