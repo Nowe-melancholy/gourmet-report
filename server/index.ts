@@ -10,8 +10,7 @@ import { UserRepository } from './repository/user.repository'
 type Bindings = {
   DB: D1Database
   R2: R2Bucket
-  JWT_SECRET: string
-}
+} & Env
 
 const app = new Hono<{ Bindings: Bindings }>()
 
@@ -45,10 +44,10 @@ const route = app
     zValidator('query', z.object({ email: z.string().email() })),
     async c => {
       const email = c.req.query().email
-      if (email !== process.env.AUTHORIZED_EMAIL)
+      if (email !== c.env.AUTHORIZED_EMAIL)
         return c.json({ error: { message: 'Unauthorized Email' } }, 401)
 
-      const jwt = await sign({ email }, process.env.JWT_SECRET ?? '')
+      const jwt = await sign({ email }, c.env.JWT_SECRET ?? '')
 
       return c.json({ error: null, jwt })
     },
@@ -128,7 +127,7 @@ const route = app
     ),
     async c => {
       const payload = c.get('jwtPayload')
-      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+      if (payload.email !== c.env.AUTHORIZED_EMAIL)
         return c.json({ error: { message: 'Unauthorized' } }, 401)
 
       const body = await c.req.parseBody<{
@@ -146,9 +145,7 @@ const route = app
       await c.env.R2.put(imgKey, body.image)
 
       const userRepo = UserRepository.create(c.env.DB)
-      const user = await userRepo.getUserByEmail(
-        process.env.AUTHORIZED_EMAIL ?? '',
-      )
+      const user = await userRepo.getUserByEmail(c.env.AUTHORIZED_EMAIL ?? '')
 
       const report = ReportModel.create({
         id: crypto.randomUUID(),
@@ -186,7 +183,7 @@ const route = app
     ),
     async c => {
       const payload = c.get('jwtPayload')
-      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+      if (payload.email !== c.env.AUTHORIZED_EMAIL)
         return c.json({ error: { message: 'Unauthorized' } }, 401)
 
       const body = await c.req.parseBody<{
@@ -202,9 +199,7 @@ const route = app
       }>()
 
       const userRepo = UserRepository.create(c.env.DB)
-      const user = await userRepo.getUserByEmail(
-        process.env.AUTHORIZED_EMAIL ?? '',
-      )
+      const user = await userRepo.getUserByEmail(c.env.AUTHORIZED_EMAIL ?? '')
 
       const reportRepo = ReportRepository.create(c.env.DB)
       const report = await reportRepo.findById(body.id)
@@ -246,7 +241,7 @@ const route = app
     zValidator('query', z.object({ id: z.string() })),
     async c => {
       const payload = c.get('jwtPayload')
-      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+      if (payload.email !== c.env.AUTHORIZED_EMAIL)
         return c.json({ error: { message: 'Unauthorized' } }, 401)
 
       const reportRepo = ReportRepository.create(c.env.DB)
