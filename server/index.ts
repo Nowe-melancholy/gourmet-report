@@ -46,11 +46,11 @@ const route = app
     async c => {
       const email = c.req.query().email
       if (email !== process.env.AUTHORIZED_EMAIL)
-        throw new Error('Unauthorized')
+        return c.json({ error: { message: 'Unauthorized Email' } }, 401)
 
       const jwt = await sign({ email }, process.env.JWT_SECRET ?? '')
 
-      return c.json({ jwt })
+      return c.json({ error: null, jwt })
     },
   )
   .get('/api/getReports', async c => {
@@ -91,19 +91,23 @@ const route = app
     async c => {
       const reportRepo = ReportRepository.create(c.env.DB)
       const report = await reportRepo.findById(c.req.query().id)
-      if (!report) throw new Error('Not Found')
+      if (!report)
+        return c.json({ error: { message: 'Report Not Found' } }, 404)
 
       return c.json({
-        id: report.id,
-        shopName: report.shopName,
-        name: report.name,
-        place: report.place,
-        rating: report.rating,
-        comment: report.comment,
-        link: report.link,
-        imgUrl: report.imgUrl,
-        dateYYYYMMDD: report.dateYYYYMMDD,
-        userId: report.userId,
+        error: null,
+        report: {
+          id: report.id,
+          shopName: report.shopName,
+          name: report.name,
+          place: report.place,
+          rating: report.rating,
+          comment: report.comment,
+          link: report.link,
+          imgUrl: report.imgUrl,
+          dateYYYYMMDD: report.dateYYYYMMDD,
+          userId: report.userId,
+        },
       })
     },
   )
@@ -125,7 +129,7 @@ const route = app
     async c => {
       const payload = c.get('jwtPayload')
       if (payload.email !== process.env.AUTHORIZED_EMAIL)
-        throw new Error('Unauthorized Email')
+        return c.json({ error: { message: 'Unauthorized' } }, 401)
 
       const body = await c.req.parseBody<{
         shopName: string
@@ -161,7 +165,7 @@ const route = app
 
       const reportRepo = ReportRepository.create(c.env.DB)
       await reportRepo.create(report)
-      return c.json(report)
+      return c.json({ error: null, report })
     },
   )
   .put(
@@ -175,7 +179,7 @@ const route = app
         place: z.string(),
         rating: z.string(),
         comment: z.string(),
-        link: z.union([z.string().url(), z.literal('null')]),
+        link: z.string(),
         image: z.union([z.instanceof(File), z.literal('null')]),
         dateYYYYMMDD: z.string().regex(/^\d{8}$/),
       }),
@@ -183,7 +187,7 @@ const route = app
     async c => {
       const payload = c.get('jwtPayload')
       if (payload.email !== process.env.AUTHORIZED_EMAIL)
-        throw new Error('Unauthorized Email')
+        return c.json({ error: { message: 'Unauthorized' } }, 401)
 
       const body = await c.req.parseBody<{
         id: string
@@ -206,7 +210,7 @@ const route = app
       const report = await reportRepo.findById(body.id)
 
       if (!report) {
-        return c.json({ message: 'not found' }, 404)
+        return c.json({ error: { message: 'Report Not Found' } }, 404)
       }
 
       const imgUrl = await (async () => {
@@ -233,13 +237,18 @@ const route = app
       })
 
       await reportRepo.update(report)
-      return c.json(report)
+
+      return c.json({ error: null, report })
     },
   )
   .delete(
     '/api/auth/deleteReport',
     zValidator('query', z.object({ id: z.string() })),
     async c => {
+      const payload = c.get('jwtPayload')
+      if (payload.email !== process.env.AUTHORIZED_EMAIL)
+        return c.json({ error: { message: 'Unauthorized' } }, 401)
+
       const reportRepo = ReportRepository.create(c.env.DB)
       const { imgUrl } = await reportRepo.delete(c.req.query().id)
       await c.env.R2.delete(imgUrl.replace(`${baseImgUrl}/`, ''))

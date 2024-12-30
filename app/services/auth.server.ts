@@ -23,10 +23,12 @@ type Env = {
 
 let _authenticator: Authenticator<AuthUserType> | null = null
 
-export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
+export const getAuthenticator = (context?: AppLoadContext) => {
   if (_authenticator) return _authenticator
 
-  const env: Env = cloudflare.env as Env
+  if (!context) throw new Error('Context shoud be provided')
+
+  const env: Env = context.cloudflare.env as Env
 
   _authenticator = new Authenticator<AuthUserType>(
     createCookieSessionStorage({
@@ -50,11 +52,15 @@ export const getAuthenticator = ({ cloudflare }: AppLoadContext) => {
       },
       async ({ profile }) => {
         const client = hc<AppType>(env.VITE_API_URL)
-        const res = await client.api.login.$get({
-          query: { email: profile.emails[0].value },
-        })
+        const res = await (
+          await client.api.login.$get({
+            query: { email: profile.emails[0].value },
+          })
+        ).json()
 
-        return res.json()
+        if (res.error) throw new Error(res.error.message)
+
+        return res
       },
     ),
   )

@@ -1,5 +1,5 @@
-import type { ActionFunction } from '@remix-run/cloudflare'
-import { Form, Link, useLoaderData, useRevalidator } from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@remix-run/cloudflare'
+import { Link, useLoaderData, useRevalidator } from '@remix-run/react'
 import { hc } from 'hono/client'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import type { AppType } from 'server'
@@ -15,26 +15,13 @@ import {
 import { useToast } from '~/hooks/use-toast'
 import { getAuthenticator } from '~/services/auth.server'
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const jwtToken =
+    (await getAuthenticator().isAuthenticated(request))?.jwt ?? ''
+
   const client = hc<AppType>(import.meta.env.VITE_API_URL)
-  const res = await client.api.getReports.$get()
-  return res.json()
-}
-
-export const action: ActionFunction = async ({ request, context }) => {
-  const formData = await request.formData()
-
-  const auth = await getAuthenticator(context).isAuthenticated(request)
-
-  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
-    headers: { Authorization: `Bearer ${auth?.jwt}` },
-  })
-
-  await client.api.auth.deleteReport.$delete({
-    query: { id: formData.get('reportId')?.toString() ?? '' },
-  })
-
-  return null
+  const res = await (await client.api.getReports.$get()).json()
+  return { reports: res.reports, jwtToken }
 }
 
 export default function AdminTop() {
@@ -60,6 +47,7 @@ export default function AdminTop() {
                 8,
               )}`,
             }}
+            jwtToken={data.jwtToken}
             revalidate={revalidate}
           />
         ))}
@@ -84,6 +72,7 @@ export default function AdminTop() {
 
 const ReportCard = ({
   report: { id, shopName, name, imgUrl, rating, comment, date },
+  jwtToken,
   revalidate,
 }: {
   report: {
@@ -95,10 +84,9 @@ const ReportCard = ({
     comment: string
     date: string
   }
+  jwtToken: string
   revalidate: () => void
 }) => {
-  const client = hc<AppType>(import.meta.env.VITE_API_URL)
-
   const { toast } = useToast()
 
   return (
@@ -125,19 +113,23 @@ const ReportCard = ({
             <Link to={`/admin/edit-report/${id}`}>
               <Button variant="outline">編集</Button>
             </Link>
-            <Form method="post">
+            <form>
               <input type="hidden" name="reportId" value={id} />
               <Button
                 variant="outline"
                 type="submit"
-                onClick={() => {
+                onClick={async () => {
+                  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+                    headers: { Authorization: `Bearer ${jwtToken}` },
+                  })
+                  await client.api.auth.deleteReport.$delete({ query: { id } })
                   revalidate()
                   toast({ title: 'レポートを削除しました' })
                 }}
               >
                 削除
               </Button>
-            </Form>
+            </form>
           </div>
         </div>
       </CardFooter>

@@ -1,11 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { type ActionFunction, redirect } from '@remix-run/cloudflare'
-import {
-  Form as RemixForm,
-  useFetcher,
-  useNavigate,
-  useNavigation,
-} from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@remix-run/cloudflare'
+import { useLoaderData, useNavigate } from '@remix-run/react'
 import { hc } from 'hono/client'
 import { Loader } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -27,41 +22,14 @@ import { Textarea } from '~/components/ui/textarea'
 import { useToast } from '~/hooks/use-toast'
 import { getAuthenticator } from '~/services/auth.server'
 
-export const loader = async () => {
-  return {}
-}
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const jwtToken = (await getAuthenticator().isAuthenticated(request))?.jwt
 
-export const action: ActionFunction = async ({ request, context }) => {
-  const formData = await request.formData()
-
-  const auth = await getAuthenticator(context).isAuthenticated(request)
-
-  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
-    headers: { Authorization: `Bearer ${auth?.jwt}` },
-  })
-
-  await client.api.auth.createReport.$post({
-    form: {
-      shopName: formData.get('shopName')?.toString() ?? '',
-      name: formData.get('name')?.toString() ?? '',
-      place: formData.get('place')?.toString() ?? '',
-      rating: formData.get('rating')?.toString() ?? '',
-      comment: formData.get('comment')?.toString() ?? '',
-      link: formData.get('link')?.toString() ?? 'null',
-      image:
-        formData.get('image') instanceof File
-          ? (formData.get('image') as File)
-          : ('null' as const),
-      dateYYYYMMDD:
-        formData.get('dateYYYYMMDD')?.toString().replace(/-/g, '') ?? '',
-    },
-  })
-
-  return redirect('/admin/top')
+  return { jwtToken }
 }
 
 export default function AddReport() {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formMethod = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       shopName: '',
@@ -93,39 +61,66 @@ export default function AddReport() {
 
   const navigate = useNavigate()
   const { toast } = useToast()
-  const fetcher = useFetcher()
 
-  const onSubmit = async (form: z.infer<typeof formSchema>) => {
-    const data = new FormData()
-    data.append('shopName', form.shopName)
-    data.append('name', form.name)
-    data.append('place', form.place)
-    data.append('rating', form.rating.toString())
-    data.append('dateYYYYMMDD', form.date.replace(/-/g, ''))
-    data.append('comment', form.comment)
-    data.append('image', form.image ?? '')
-    data.append('link', form.link)
+  const { jwtToken } = useLoaderData<typeof loader>()
 
-    fetcher.submit(data, { method: 'post', encType: 'multipart/form-data' })
-    toast({ title: 'レポート内容を変更しました' })
+  const onSubmit = async ({
+    shopName,
+    name,
+    place,
+    rating,
+    date,
+    comment,
+    link,
+    image,
+  }: z.infer<typeof formSchema>) => {
+    const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+      headers: { Authorization: `Bearer ${jwtToken}` },
+    })
+
+    const result = await (
+      await client.api.auth.createReport.$post({
+        form: {
+          shopName,
+          name,
+          place,
+          rating: rating.toString(),
+          comment,
+          link: link,
+          image: image ?? 'null',
+          dateYYYYMMDD: date.replace(/-/g, ''),
+        },
+      })
+    ).json()
+
+    if (result.error) {
+      toast({
+        title: 'エラーが発生しました',
+        description: result.error.message,
+      })
+      return
+    }
+
+    navigate('/admin/top')
+
+    toast({ title: 'レポートを登録しました' })
   }
 
-  const isSubmitting =
-    fetcher.state === 'submitting' || form.formState.isSubmitting
+  const isSubmitting = formMethod.formState.isSubmitting
 
   return (
     <>
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
       <div className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">新しい料理レポートを登録</h1>
-        <Form {...form}>
-          <RemixForm
+        <Form {...formMethod}>
+          <form
             method="post"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={formMethod.handleSubmit(onSubmit)}
             className="space-y-8"
           >
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="shopName"
               render={({ field }) => (
                 <FormItem>
@@ -141,7 +136,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -157,7 +152,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="place"
               render={({ field }) => (
                 <FormItem>
@@ -171,7 +166,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="rating"
               render={({ field }) => (
                 <FormItem>
@@ -195,7 +190,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="date"
               render={({ field }) => (
                 <FormItem>
@@ -211,7 +206,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="comment"
               render={({ field }) => (
                 <FormItem>
@@ -230,7 +225,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="link"
               render={({ field }) => (
                 <FormItem>
@@ -246,7 +241,7 @@ export default function AddReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="image"
               render={({ field: { onChange } }) => (
                 <FormItem>
@@ -287,7 +282,7 @@ export default function AddReport() {
                 'レポートを登録'
               )}
             </Button>
-          </RemixForm>
+          </form>
         </Form>
       </div>
     </>

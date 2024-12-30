@@ -1,15 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  type ActionFunction,
-  type LoaderFunctionArgs,
-  redirect,
-} from '@remix-run/cloudflare'
-import {
-  Form as RemixForm,
-  useFetcher,
-  useLoaderData,
-  useNavigate,
-} from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@remix-run/cloudflare'
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { hc } from 'hono/client'
 import { Loader } from 'lucide-react'
 import { useRef, useState } from 'react'
@@ -31,67 +22,40 @@ import { Textarea } from '~/components/ui/textarea'
 import { useToast } from '~/hooks/use-toast'
 import { getAuthenticator } from '~/services/auth.server'
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const jwtToken = (await getAuthenticator().isAuthenticated(request))?.jwt
+
   const client = hc<AppType>(import.meta.env.VITE_API_URL)
-  const report = await client.api.getReportById.$get({
-    query: { id: params.reportId ?? '' },
-  })
+  const res = await (
+    await client.api.getReportById.$get({
+      query: { id: params.reportId ?? '' },
+    })
+  ).json()
 
-  return report.json()
-}
+  if (res.error) throw new Error(res.error.message)
 
-export const action: ActionFunction = async ({ request, context, params }) => {
-  const formData = await request.formData()
-
-  const auth = await getAuthenticator(context).isAuthenticated(request)
-
-  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
-    headers: { Authorization: `Bearer ${auth?.jwt}` },
-  })
-
-  const reportId = params.reportId ?? ''
-
-  await client.api.auth.updateReport.$put({
-    form: {
-      id: reportId,
-      shopName: formData.get('shopName')?.toString() ?? '',
-      name: formData.get('name')?.toString() ?? '',
-      place: formData.get('place')?.toString() ?? '',
-      rating: formData.get('rating')?.toString() ?? '',
-      comment: formData.get('comment')?.toString() ?? '',
-      link: formData.get('link')?.toString() ?? 'null',
-      image:
-        formData.get('image') instanceof File
-          ? (formData.get('image') as File)
-          : ('null' as const),
-      dateYYYYMMDD:
-        formData.get('dateYYYYMMDD')?.toString().replace(/-/g, '') ?? '',
-    },
-  })
-
-  return redirect('/admin/top')
+  return { report: res.report, jwtToken }
 }
 
 export default function EditReport() {
-  const data = useLoaderData<typeof loader>()
-  if (!data) throw new Error('No data')
+  const { report, jwtToken } = useLoaderData<typeof loader>()
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const formMethod = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      shopName: data.shopName,
-      name: data.name,
-      place: data.place,
-      rating: data.rating,
-      date: `${data.dateYYYYMMDD.slice(0, 4)}-${data.dateYYYYMMDD.slice(4, 6)}-${data.dateYYYYMMDD.slice(6, 8)}`,
-      comment: data.comment,
-      link: data.link ?? '',
+      shopName: report.shopName,
+      name: report.name,
+      place: report.place,
+      rating: report.rating,
+      date: `${report.dateYYYYMMDD.slice(0, 4)}-${report.dateYYYYMMDD.slice(4, 6)}-${report.dateYYYYMMDD.slice(6, 8)}`,
+      comment: report.comment,
+      link: report.link ?? '',
       image: null,
     },
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [previewImage, setPreviewImage] = useState<string | null>(data.imgUrl)
+  const [previewImage, setPreviewImage] = useState<string | null>(report.imgUrl)
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -106,27 +70,53 @@ export default function EditReport() {
     }
   }
 
-  const fetcher = useFetcher()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { reportId } = useParams()
 
-  const onSubmit = async (form: z.infer<typeof formSchema>) => {
-    const data = new FormData()
-    data.append('shopName', form.shopName)
-    data.append('name', form.name)
-    data.append('place', form.place)
-    data.append('rating', form.rating.toString())
-    data.append('dateYYYYMMDD', form.date.replace(/-/g, ''))
-    data.append('comment', form.comment)
-    data.append('image', form.image ?? '')
-    data.append('link', form.link)
+  const onSubmit = async ({
+    shopName,
+    name,
+    place,
+    rating,
+    date,
+    comment,
+    link,
+    image,
+  }: z.infer<typeof formSchema>) => {
+    const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+      headers: { Authorization: `Bearer ${jwtToken}` },
+    })
 
-    fetcher.submit(data, { method: 'post', encType: 'multipart/form-data' })
+    const result = await (
+      await client.api.auth.updateReport.$put({
+        form: {
+          id: reportId ?? '',
+          shopName,
+          name,
+          place,
+          rating: rating.toString(),
+          comment,
+          link: link,
+          image: image ?? 'null',
+          dateYYYYMMDD: date.replace(/-/g, ''),
+        },
+      })
+    ).json()
+
+    if (result.error) {
+      toast({
+        title: 'エラーが発生しました',
+        description: result.error.message,
+      })
+      return
+    }
+
+    navigate('/admin/top')
     toast({ title: 'レポート内容を変更しました' })
   }
 
-  const isSubmitting =
-    fetcher.state === 'submitting' || form.formState.isSubmitting
+  const isSubmitting = formMethod.formState.isSubmitting
 
   return (
     <>
@@ -134,14 +124,14 @@ export default function EditReport() {
       <div className="container mx-auto py-8">
         <h1 className="text-3xl font-bold mb-8">レポートを編集</h1>
 
-        <Form {...form}>
-          <RemixForm
+        <Form {...formMethod}>
+          <form
             method="post"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={formMethod.handleSubmit(onSubmit)}
             className="space-y-8"
           >
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="shopName"
               render={({ field }) => (
                 <FormItem>
@@ -157,7 +147,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
@@ -173,7 +163,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="place"
               render={({ field }) => (
                 <FormItem>
@@ -187,7 +177,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="rating"
               render={({ field }) => (
                 <FormItem>
@@ -211,7 +201,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="date"
               render={({ field }) => (
                 <FormItem>
@@ -227,7 +217,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="comment"
               render={({ field }) => (
                 <FormItem>
@@ -246,7 +236,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="link"
               render={({ field }) => (
                 <FormItem>
@@ -262,7 +252,7 @@ export default function EditReport() {
               )}
             />
             <FormField
-              control={form.control}
+              control={formMethod.control}
               name="image"
               render={({ field: { onChange } }) => (
                 <FormItem>
@@ -303,7 +293,7 @@ export default function EditReport() {
                 'レポートを登録'
               )}
             </Button>
-          </RemixForm>
+          </form>
         </Form>
       </div>
     </>
