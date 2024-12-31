@@ -106,8 +106,6 @@ export default function AddReport() {
     toast({ title: 'レポートを登録しました' })
   }
 
-  const isSubmitting = formMethod.formState.isSubmitting
-
   return (
     <>
       <Button onClick={() => navigate('/admin/top')}>一覧に戻る</Button>
@@ -275,8 +273,15 @@ export default function AddReport() {
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button
+              type="submit"
+              disabled={
+                formMethod.formState.isSubmitting ||
+                formMethod.formState.isSubmitted
+              }
+              className="min-w-28"
+            >
+              {formMethod.formState.isSubmitting ? (
                 <Loader className="animate-spin" />
               ) : (
                 'レポートを登録'

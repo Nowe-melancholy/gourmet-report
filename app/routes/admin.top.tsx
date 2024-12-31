@@ -1,7 +1,8 @@
 import type { LoaderFunctionArgs } from '@remix-run/cloudflare'
 import { Link, useLoaderData, useRevalidator } from '@remix-run/react'
 import { hc } from 'hono/client'
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader, Star } from 'lucide-react'
+import { useState } from 'react'
 import type { AppType } from 'server'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
@@ -89,6 +90,19 @@ const ReportCard = ({
 }) => {
   const { toast } = useToast()
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const onClick = async () => {
+    setIsSubmitting(true)
+    const client = hc<AppType>(import.meta.env.VITE_API_URL, {
+      headers: { Authorization: `Bearer ${jwtToken}` },
+    })
+    await client.api.auth.deleteReport.$delete({ query: { id } })
+    setIsSubmitting(false)
+    revalidate()
+    toast({ title: 'レポートを削除しました' })
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -118,16 +132,11 @@ const ReportCard = ({
               <Button
                 variant="outline"
                 type="submit"
-                onClick={async () => {
-                  const client = hc<AppType>(import.meta.env.VITE_API_URL, {
-                    headers: { Authorization: `Bearer ${jwtToken}` },
-                  })
-                  await client.api.auth.deleteReport.$delete({ query: { id } })
-                  revalidate()
-                  toast({ title: 'レポートを削除しました' })
-                }}
+                onClick={onClick}
+                disabled={isSubmitting}
+                className="min-w-4"
               >
-                削除
+                {isSubmitting ? <Loader className="animate-spin" /> : '削除'}
               </Button>
             </form>
           </div>
